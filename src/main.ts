@@ -5,7 +5,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from './database/prisma.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard'; // Importar el guard
+import { JwtAuthGuard } from '../modules/auth/guards/jwt-auth.guard'; // Importar el guard
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

@@ -8,6 +8,6 @@ import { ProductsController } from './products.controller';
   // imports: [PrismaModule], // No es necesario si PrismaModule es global
   controllers: [ProductsController],
   providers: [ProductsService],
-  exports: [ProductsService] // Exportar el servicio si otros módulos lo necesitan (ej: SalesModule)
+  exports: [ProductsService], // Exportar el servicio si otros módulos lo necesitan (ej: SalesModule)
 })
 export class ProductsModule {}

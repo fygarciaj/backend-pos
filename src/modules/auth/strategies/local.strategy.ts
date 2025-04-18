@@ -5,11 +5,12 @@ import { AuthService } from '../auth.service';
 import { LoginDto } from '../dto/login.dto'; // Crearemos este DTO
 
 @Injectable()
-export class LocalStrategy extends PassportStrategy(Strategy) { // Usa 'local' como nombre por defecto
+export class LocalStrategy extends PassportStrategy(Strategy) {
+  // Usa 'local' como nombre por defecto
   constructor(private authService: AuthService) {
     super({
-        usernameField: 'username', // Campo esperado en el body para el username
-        // passwordField: 'password' // Es el default, no necesita especificarse
+      usernameField: 'username', // Campo esperado en el body para el username
+      // passwordField: 'password' // Es el default, no necesita especificarse
     });
   }
 

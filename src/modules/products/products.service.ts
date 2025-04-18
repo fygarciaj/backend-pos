@@ -221,67 +221,6 @@ export class ProductsService {
     });
   }
 
-  async updateStock(
-    productId: string,
-    quantityChange: number,
-    movementType: InventoryMovementType,
-    userId?: string,
-    reason?: string,
-    relatedSaleId?: string,
-    relatedPurchaseOrderId?: string,
-    relatedReturnId?: string,
-  ): Promise<Product> {
-    // Este método debería ejecutarse dentro de una transacción junto con la creación del InventoryMovement
-    return this.prisma.$transaction(async (tx) => {
-      const product = await tx.product.findUnique({
-        where: { id: productId },
-      });
-
-      if (!product) {
-        throw new NotFoundException(
-          `Product with ID "${productId}" not found for stock update.`,
-        );
-      }
-
-      const newStock = product.currentStock + quantityChange;
-
-      // Validar stock mínimo/máximo si es necesario
-      // if (newStock < product.minStock) { /* Lógica de alerta */ }
-      // if (product.maxStock !== null && newStock > product.maxStock) { /* Lógica de error o alerta */ }
-      if (newStock < 0 && movementType === InventoryMovementType.OUT_SALE) {
-        throw new Error(
-          `Insufficient stock for product ${product.name} (ID: ${productId}). Required: ${Math.abs(quantityChange)}, Available: ${product.currentStock}`,
-        );
-      }
-
-      // Crear el registro de movimiento de inventario
-      await tx.inventoryMovement.create({
-        data: {
-          productId: productId,
-          quantity: quantityChange,
-          type: movementType,
-          userId: userId, // Puede ser null si es un proceso automático
-          reason: reason,
-          relatedSaleId: relatedSaleId,
-          relatedPurchaseOrderId: relatedPurchaseOrderId,
-          relatedReturnId: relatedReturnId,
-        },
-      });
-
-      // Actualizar el stock del producto
-      const updatedProduct = await tx.product.update({
-        where: { id: productId },
-        data: { currentStock: newStock },
-      });
-
-      // Aquí podrías emitir eventos si tienes alertas de stock bajo, etc.
-      if (updatedProduct.currentStock <= updatedProduct.minStock) {
-        console.warn(
-          `LOW STOCK ALERT: Product ${updatedProduct.name} (ID: ${productId}) reached minimum stock level (${updatedProduct.currentStock}/${updatedProduct.minStock})`,
-        );
-        // TODO: Implementar sistema de notificaciones (email, dashboard, etc.)
-      }
-
       /**
    * Updates the stock for a product and creates an inventory movement record.
    * Can be executed within a Prisma transaction by passing the transaction client.

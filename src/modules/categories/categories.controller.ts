@@ -13,7 +13,14 @@ import {
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
@@ -44,10 +51,25 @@ export class CategoriesController {
   @ApiOperation({ summary: 'Get a list of categories (Public)' })
   @ApiQuery({ name: 'skip', required: false, type: Number })
   @ApiQuery({ name: 'take', required: false, type: Number })
-  @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by name (contains)' })
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    type: String,
+    description: 'Filter by name (contains)',
+  })
   @ApiQuery({ name: 'isActive', required: false, type: Boolean })
-  @ApiQuery({ name: 'includeProductsCount', required: false, type: Boolean, description: 'Include count of products in each category' })
-  @ApiQuery({ name: 'includeChildren', required: false, type: Boolean, description: 'Include direct children categories' })
+  @ApiQuery({
+    name: 'includeProductsCount',
+    required: false,
+    type: Boolean,
+    description: 'Include count of products in each category',
+  })
+  @ApiQuery({
+    name: 'includeChildren',
+    required: false,
+    type: Boolean,
+    description: 'Include direct children categories',
+  })
   @ApiResponse({ status: 200, description: 'List of categories.' })
   findAll(
     @Query('skip') skip?: string,
@@ -76,7 +98,7 @@ export class CategoriesController {
   @ApiOperation({ summary: 'Get category tree structure (Public)' })
   @ApiResponse({ status: 200, description: 'Hierarchical list of categories.' })
   getTree() {
-      return this.categoriesService.getCategoryTree();
+    return this.categoriesService.getCategoryTree();
   }
 
   @Public() // Permitir acceso público por slug
@@ -86,9 +108,8 @@ export class CategoriesController {
   @ApiResponse({ status: 200, description: 'Category details.' })
   @ApiResponse({ status: 404, description: 'Category not found.' })
   findBySlug(@Param('slug') slug: string) {
-      return this.categoriesService.findBySlug(slug);
+    return this.categoriesService.findBySlug(slug);
   }
-
 
   @Get(':id')
   // Podría ser público o requerir solo autenticación básica si se usa en el frontend
@@ -111,7 +132,10 @@ export class CategoriesController {
   @ApiResponse({ status: 400, description: 'Bad Request (Validation Error).' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden (Insufficient Role).' })
-  @ApiResponse({ status: 404, description: 'Not Found (Category or Parent Category).' })
+  @ApiResponse({
+    status: 404,
+    description: 'Not Found (Category or Parent Category).',
+  })
   @ApiResponse({ status: 409, description: 'Conflict (Name or Slug exists).' })
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -129,7 +153,10 @@ export class CategoriesController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden (Insufficient Role).' })
   @ApiResponse({ status: 404, description: 'Category not found.' })
-  @ApiResponse({ status: 409, description: 'Conflict (Category has products or subcategories).' })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict (Category has products or subcategories).',
+  })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoriesService.remove(id);
   }

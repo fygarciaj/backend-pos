@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service'; // Ajusta ruta
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
@@ -21,10 +26,14 @@ export class BrandsService {
     });
     if (existingBrand) {
       if (existingBrand.name === name) {
-        throw new ConflictException(`Brand with name "${name}" already exists.`);
+        throw new ConflictException(
+          `Brand with name "${name}" already exists.`,
+        );
       }
       if (existingBrand.slug === finalSlug) {
-        throw new ConflictException(`Brand with slug "${finalSlug}" already exists.`);
+        throw new ConflictException(
+          `Brand with slug "${finalSlug}" already exists.`,
+        );
       }
     }
 
@@ -57,7 +66,9 @@ export class BrandsService {
       where,
       orderBy: orderBy ?? { order: 'asc', name: 'asc' }, // Orden por defecto
       include: {
-        _count: includeProductsCount ? { select: { products: true } } : undefined,
+        _count: includeProductsCount
+          ? { select: { products: true } }
+          : undefined,
         // Podríamos incluir 'suppliers' si fuera necesario, pero puede ser pesado
       },
     });
@@ -80,13 +91,13 @@ export class BrandsService {
 
   async findBySlug(slug: string): Promise<Brand | null> {
     const brand = await this.prisma.brand.findUnique({
-        where: { slug },
-        include: {
-            products: { take: 10, orderBy: { name: 'asc' } },
-            _count: { select: { products: true } },
-        },
+      where: { slug },
+      include: {
+        products: { take: 10, orderBy: { name: 'asc' } },
+        _count: { select: { products: true } },
+      },
     });
-     if (!brand) {
+    if (!brand) {
       throw new NotFoundException(`Brand with slug "${slug}" not found`);
     }
     return brand;
@@ -101,27 +112,37 @@ export class BrandsService {
 
     // Validar y preparar nombre y slug si se proporcionan
     if (name || slug) {
-        const currentBrand = await this.prisma.brand.findUnique({ where: { id } });
-        const finalName = name ?? currentBrand.name;
-        const finalSlug = slug ? slugify(slug) : (name ? slugify(name) : currentBrand.slug);
+      const currentBrand = await this.prisma.brand.findUnique({
+        where: { id },
+      });
+      const finalName = name ?? currentBrand.name;
+      const finalSlug = slug
+        ? slugify(slug)
+        : name
+          ? slugify(name)
+          : currentBrand.slug;
 
-        // Verificar si el nuevo nombre o slug ya existen en OTRA marca
-        const existingBrand = await this.prisma.brand.findFirst({
-            where: {
-                id: { not: id }, // Excluir la marca actual
-                OR: [{ name: finalName }, { slug: finalSlug }],
-            },
-        });
-        if (existingBrand) {
-            if (existingBrand.name === finalName) {
-                throw new ConflictException(`Brand with name "${finalName}" already exists.`);
-            }
-            if (existingBrand.slug === finalSlug) {
-                throw new ConflictException(`Brand with slug "${finalSlug}" already exists.`);
-            }
+      // Verificar si el nuevo nombre o slug ya existen en OTRA marca
+      const existingBrand = await this.prisma.brand.findFirst({
+        where: {
+          id: { not: id }, // Excluir la marca actual
+          OR: [{ name: finalName }, { slug: finalSlug }],
+        },
+      });
+      if (existingBrand) {
+        if (existingBrand.name === finalName) {
+          throw new ConflictException(
+            `Brand with name "${finalName}" already exists.`,
+          );
         }
-        if (name) dataToUpdate.name = name;
-        dataToUpdate.slug = finalSlug; // Siempre actualizar slug si nombre o slug cambian
+        if (existingBrand.slug === finalSlug) {
+          throw new ConflictException(
+            `Brand with slug "${finalSlug}" already exists.`,
+          );
+        }
+      }
+      if (name) dataToUpdate.name = name;
+      dataToUpdate.slug = finalSlug; // Siempre actualizar slug si nombre o slug cambian
     }
 
     try {
@@ -141,10 +162,14 @@ export class BrandsService {
     // Verificar si tiene productos asociados
     // Nota: La relación con SupplierBrand (muchos-a-muchos) se borraría automáticamente si se borra la marca,
     // pero es bueno verificar si hay productos primero.
-    const hasProducts = await this.prisma.product.count({ where: { brandId: id } });
+    const hasProducts = await this.prisma.product.count({
+      where: { brandId: id },
+    });
 
     if (hasProducts > 0) {
-      throw new ConflictException(`Cannot delete brand "${brandToDelete.name}" because it has ${hasProducts} associated products. Please reassign or delete them first.`);
+      throw new ConflictException(
+        `Cannot delete brand "${brandToDelete.name}" because it has ${hasProducts} associated products. Please reassign or delete them first.`,
+      );
     }
 
     // Si no hay dependencias de productos, proceder a borrar
@@ -162,19 +187,25 @@ export class BrandsService {
   // Helper para manejar errores de base de datos (similar al de CategoriesService)
   private handleDbError(error: any, context?: any): never {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') { // Unique constraint violation
+      if (error.code === 'P2002') {
+        // Unique constraint violation
         const fields = error.meta?.target as string[];
         let message = 'Unique constraint violation.';
-        if (fields?.includes('name') && context?.name) message = `Brand with name "${context.name}" already exists.`;
-        else if (fields?.includes('slug') && context?.slug) message = `Brand with slug "${context.slug}" already exists.`;
+        if (fields?.includes('name') && context?.name)
+          message = `Brand with name "${context.name}" already exists.`;
+        else if (fields?.includes('slug') && context?.slug)
+          message = `Brand with slug "${context.slug}" already exists.`;
         throw new ConflictException(message);
       }
-       if (error.code === 'P2025') { // Record not found
-            throw new NotFoundException('The brand record was not found.');
-       }
-       // P2003 (Foreign key constraint) se maneja con la verificación de productos antes de borrar
+      if (error.code === 'P2025') {
+        // Record not found
+        throw new NotFoundException('The brand record was not found.');
+      }
+      // P2003 (Foreign key constraint) se maneja con la verificación de productos antes de borrar
     }
     console.error('Database Error:', error);
-    throw new InternalServerErrorException('An unexpected database error occurred.');
+    throw new InternalServerErrorException(
+      'An unexpected database error occurred.',
+    );
   }
 }

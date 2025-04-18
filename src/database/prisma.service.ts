@@ -8,7 +8,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   constructor() {
     super({
-      log: [ // Configurar logs de Prisma (ajustar según necesidad)
+      log: [
+        // Configurar logs de Prisma (ajustar según necesidad)
         { emit: 'event', level: 'query' },
         { emit: 'stdout', level: 'info' },
         { emit: 'stdout', level: 'warn' },
@@ -33,9 +34,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   async enableShutdownHooks(app: INestApplication) {
     process.on('beforeExit', async () => {
-        this.logger.log('Disconnecting Prisma Client...');
-        await app.close();
-        this.logger.log('Prisma Client Disconnected');
+      this.logger.log('Disconnecting Prisma Client...');
+      await app.close();
+      this.logger.log('Prisma Client Disconnected');
     });
   }
 

@@ -8,6 +8,9 @@ import {
   InventoryMovementType,
   Product,
 } from '@prisma/client';
+// Importar Prisma para usar tipos y $queryRaw
+import { Prisma as PrismaTypes } from '@prisma/client';
+
 
 @Injectable()
 export class InventoryService {
@@ -94,13 +97,13 @@ export class InventoryService {
       include: {
         product: { select: { id: true, name: true, sku: true } }, // Incluir info básica del producto
         user: { select: { id: true, username: true, fullName: true } }, // Incluir info básica del usuario
-        // Podríamos incluir opcionalmente Sale, PurchaseOrder, Return si se necesita navegar desde aquí
       },
     });
   }
 
   /**
    * Retrieves a report of current stock levels, optionally filtering low stock.
+   * Uses $queryRaw for efficient low stock filtering.
    * @param params - Filtering parameters (e.g., lowStockOnly).
    * @returns A list of products with their stock levels.
    */
@@ -111,56 +114,99 @@ export class InventoryService {
     search?: string;
     skip?: number;
     take?: number;
-  }): Promise<Product[]> {
-    const { lowStockOnly, categoryId, brandId, search, skip, take } = params;
-    const where: Prisma.ProductWhereInput = {
-      isActive: true, // Generalmente solo reportamos sobre productos activos
-    };
+    // Definir una interfaz para el tipo de resultado esperado de $queryRaw
+  }): Promise<any[]> { // El tipo de retorno será un array de objetos crudos o mapeados
+    const {
+        lowStockOnly = false, // Default a false
+        categoryId,
+        brandId,
+        search,
+        skip = 0, // Default a 0
+        take = 50, // Default a 50
+    } = params;
+
+    const conditions: string[] = ['p."isActive" = TRUE']; // Siempre filtrar por activos
+    const queryParams: any[] = [];
 
     if (lowStockOnly) {
-      // Filtrar donde currentStock <= minStock
-      where.currentStock = {
-        lte: { prisma: { product: { fields: ['minStock'] } } },
-      }; // Referencia a otro campo
-      // Alternativa más simple si la anterior no funciona en todas las DBs:
-      // where.AND = [{ currentStock: { lte: prisma.product.fields.minStock } }]; // Necesita importación especial
-      // O la forma más compatible pero menos eficiente: obtener todos y filtrar en código (no recomendado para grandes datasets)
+      conditions.push('p."currentStock" <= p."minStock"');
     }
-    if (categoryId) where.categoryId = categoryId;
-    if (brandId) where.brandId = brandId;
+    if (categoryId) {
+      queryParams.push(categoryId);
+      conditions.push(`p."categoryId" = $${queryParams.length}`);
+    }
+    if (brandId) {
+      queryParams.push(brandId);
+      conditions.push(`p."brandId" = $${queryParams.length}`);
+    }
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
-        { barcode: { contains: search, mode: 'insensitive' } },
-      ];
+        const searchPattern = `%${search}%`;
+        queryParams.push(searchPattern);
+        const searchIndex = queryParams.length;
+        // Asumiendo que la base de datos soporta ILIKE para case-insensitive
+        // Ajustar a LIKE si es necesario o si la colación ya es case-insensitive
+        conditions.push(`(p."name" ILIKE $${searchIndex} OR p."sku" ILIKE $${searchIndex} OR p."barcode" ILIKE $${searchIndex})`);
     }
 
-    return this.prisma.product.findMany({
-      where,
-      skip,
-      take,
-      select: {
-        // Seleccionar solo campos relevantes para el reporte
-        id: true,
-        name: true,
-        sku: true,
-        barcode: true,
-        currentStock: true,
-        minStock: true,
-        unitOfMeasure: true,
-        category: { select: { id: true, name: true } },
-        brand: { select: { id: true, name: true } },
-        // sellingPrice: true, // Podría ser útil
-      },
-      orderBy: { name: 'asc' },
-    });
+    // Construir la cláusula WHERE
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    // Nota: La forma de comparar currentStock <= minStock puede variar o requerir raw queries
-    // dependiendo de la versión de Prisma y la base de datos. La forma más segura
-    // si la referencia directa no funciona es:
-    // const products = await this.prisma.product.findMany({ where: { isActive: true }, select: { id: true, currentStock: true, minStock: true, ... } });
-    // return products.filter(p => p.currentStock <= p.minStock);
-    // Pero esto es ineficiente para la paginación y grandes datasets.
+    // Construir la consulta SQL cruda
+    // Seleccionamos los campos necesarios y unimos con Category y Brand
+    // Usamos alias para claridad y evitar colisiones de nombres
+    const rawQuery = PrismaTypes.sql`
+        SELECT
+            p.id,
+            p.name,
+            p.sku,
+            p.barcode,
+            p."currentStock",
+            p."minStock",
+            p."unitOfMeasure",
+            c.id as "categoryId",
+            c.name as "categoryName",
+            b.id as "brandId",
+            b.name as "brandName"
+        FROM "Product" p
+        LEFT JOIN "Category" c ON p."categoryId" = c.id
+        LEFT JOIN "Brand" b ON p."brandId" = b.id
+        ${PrismaTypes.raw(whereClause)} -- Inyectar cláusula WHERE construida
+        ORDER BY p.name ASC
+        LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
+    `;
+
+    // Añadir parámetros de paginación al array
+    queryParams.push(take);
+    queryParams.push(skip);
+
+    this.logger.debug(`Executing raw query for stock report: ${rawQuery} with params: ${JSON.stringify(queryParams)}`);
+
+    try {
+        const result: any[] = await this.prisma.$queryRaw(rawQuery, ...queryParams);
+
+        // Mapear el resultado crudo a una estructura más amigable si es necesario
+        // (similar al 'select' original)
+        return result.map(row => ({
+            id: row.id,
+            name: row.name,
+            sku: row.sku,
+            barcode: row.barcode,
+            currentStock: row.currentStock,
+            minStock: row.minStock,
+            unitOfMeasure: row.unitOfMeasure,
+            category: {
+                id: row.categoryId,
+                name: row.categoryName,
+            },
+            brand: {
+                id: row.brandId,
+                name: row.brandName,
+            },
+        }));
+
+    } catch (error) {
+        this.logger.error(`Error executing raw query for stock report: ${error.message}`, error.stack);
+        throw new Error(`Failed to generate current stock report: ${error.message}`);
+    }
   }
 }

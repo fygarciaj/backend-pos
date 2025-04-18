@@ -5,13 +5,18 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
   // Sobrescribir password para hacerlo opcional y mantener validación si se provee
-  @ApiProperty({ example: 'NewPassword123!', description: 'New user password (optional)', required: false })
+  @ApiProperty({
+    example: 'NewPassword123!',
+    description: 'New user password (optional)',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   @MinLength(8)
-   @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-       message: 'Password too weak. Must contain uppercase, lowercase, number, and special character.'
-   })
+  @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+    message:
+      'Password too weak. Must contain uppercase, lowercase, number, and special character.',
+  })
   password?: string;
 }
 

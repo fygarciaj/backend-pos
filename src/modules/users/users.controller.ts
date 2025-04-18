@@ -12,7 +12,12 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 // JwtAuthGuard ya es global, no necesitamos importarlo aquí a menos que quitemos el global
 // import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard'; // Importar RolesGuard
@@ -34,7 +39,10 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden (Insufficient Role).' })
-  @ApiResponse({ status: 409, description: 'Conflict (e.g., username exists).' })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict (e.g., username exists).',
+  })
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
@@ -72,8 +80,14 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden (Insufficient Role).' })
-  @ApiResponse({ status: 409, description: 'Conflict (e.g., username exists).' })
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateUserDto: UpdateUserDto) {
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict (e.g., username exists).',
+  })
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     // Podrías añadir lógica para que un usuario pueda modificar su propio perfil
     return this.usersService.update(id, updateUserDto);
   }
@@ -86,7 +100,10 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden (Insufficient Role).' })
-  @ApiResponse({ status: 409, description: 'Conflict (cannot delete due to dependencies).' })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict (cannot delete due to dependencies).',
+  })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.remove(id);
   }

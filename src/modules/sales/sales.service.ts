@@ -340,4 +340,3 @@ export class SalesService {
   //   Si se implementa, debe manejar la reversión de stock como en update/cancel.
   // }
 }
-

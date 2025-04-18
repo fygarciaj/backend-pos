@@ -13,7 +13,14 @@ import {
 import { BrandsService } from './brands.service';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
@@ -44,9 +51,19 @@ export class BrandsController {
   @ApiOperation({ summary: 'Get a list of brands (Public)' })
   @ApiQuery({ name: 'skip', required: false, type: Number })
   @ApiQuery({ name: 'take', required: false, type: Number })
-  @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by name (contains)' })
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    type: String,
+    description: 'Filter by name (contains)',
+  })
   @ApiQuery({ name: 'isActive', required: false, type: Boolean })
-  @ApiQuery({ name: 'includeProductsCount', required: false, type: Boolean, description: 'Include count of products in each brand' })
+  @ApiQuery({
+    name: 'includeProductsCount',
+    required: false,
+    type: Boolean,
+    description: 'Include count of products in each brand',
+  })
   @ApiResponse({ status: 200, description: 'List of brands.' })
   findAll(
     @Query('skip') skip?: string,
@@ -75,7 +92,7 @@ export class BrandsController {
   @ApiResponse({ status: 200, description: 'Brand details.' })
   @ApiResponse({ status: 404, description: 'Brand not found.' })
   findBySlug(@Param('slug') slug: string) {
-      return this.brandsService.findBySlug(slug);
+    return this.brandsService.findBySlug(slug);
   }
 
   @Get(':id')
@@ -117,7 +134,10 @@ export class BrandsController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden (Insufficient Role).' })
   @ApiResponse({ status: 404, description: 'Brand not found.' })
-  @ApiResponse({ status: 409, description: 'Conflict (Brand has associated products).' })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict (Brand has associated products).',
+  })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.brandsService.remove(id);
   }

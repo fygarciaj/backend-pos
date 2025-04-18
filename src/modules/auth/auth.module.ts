@@ -28,7 +28,7 @@ import { JwtStrategy } from './strategies/jwt.strategy'; // Crearemos esto
   providers: [
     AuthService,
     LocalStrategy, // Registrar la estrategia local
-    JwtStrategy,   // Registrar la estrategia JWT
+    JwtStrategy, // Registrar la estrategia JWT
   ],
   exports: [AuthService, JwtModule], // Exportar JwtModule si otros módulos necesitan verificar/decodificar tokens
 })

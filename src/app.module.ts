@@ -4,10 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './database/prisma.module';
 import { UsersModule } from './modules/users/users.module';
-import { ReturnsModule } from './returns/returns.module';
 import { CustomersModule } from './customers/customers.module';
-import { InventoryModule } from './inventory/inventory.module';
-import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
 import { ReportsModule } from './reports/reports.module';
 import { LocationsModule } from './locations/locations.module';
 // import { AuditModule } from './audit/audit.module'; // Descomentar si se implementa
@@ -17,6 +14,9 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { BrandsModule } from './modules/brands/brands.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
+import { PurchaseOrdersModule } from './modules/purchase-orders/purchase-orders.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { ReturnsModule } from './modules/returns/returns.module';
 import configuration from './config/configuration';
 
 @Module({

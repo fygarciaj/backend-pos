@@ -5,7 +5,8 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from './database/prisma.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../modules/auth/guards/jwt-auth.guard'; // Importar el guard
+//import { RolesGuard } from './modules/auth/guards/roles.guard';
+// Importar el guard
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -37,7 +38,7 @@ async function bootstrap() {
 
   // --- Aplicar JwtAuthGuard Globalmente ---
   // Reflector es necesario para que el guard pueda leer la metadata de @Public()
-  app.useGlobalGuards(new JwtAuthGuard(reflector), new JwtAuthGuard(reflector)); // Aplicar el guard globalmente
+  app.useGlobalGuards(new JwtAuthGuard(reflector)); // Aplicar el guard globalmente
   // --- Fin de Aplicar JwtAuthGuard Globalmente ---
 
   // Swagger (como ya tenías)

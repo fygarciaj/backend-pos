@@ -3,8 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './database/prisma.module';
-import { UsersModule } from '../modules/users/users.module';
-import { BrandsModule } from './brands/brands.module';
+import { UsersModule } from './modules/users/users.module';
 import { SalesModule } from './sales/sales.module';
 import { ReturnsModule } from './returns/returns.module';
 import { CustomersModule } from './customers/customers.module';
@@ -14,11 +13,10 @@ import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
 import { ReportsModule } from './reports/reports.module';
 import { LocationsModule } from './locations/locations.module';
 // import { AuditModule } from './audit/audit.module'; // Descomentar si se implementa
-import { ProductsModule } from '../modules/products/products.module';
-import { AuthModule } from '../modules/auth/auth.module';
-import { CategoriesModule } from '../modules/categories/categories.module';
-import { BrandsModule } from '../modules/brands/brands.module';
-import { CategoriesModule } from './src/modules/categories/categories.module';
+import { ProductsModule } from './modules/products/products.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { BrandsModule } from './modules/brands/brands.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -32,7 +30,6 @@ import configuration from './config/configuration';
     UsersModule,
     ProductsModule,
     CategoriesModule,
-    BrandsModule,
     SalesModule,
     ReturnsModule,
     CustomersModule,
@@ -41,6 +38,7 @@ import configuration from './config/configuration';
     PurchaseOrdersModule,
     ReportsModule,
     LocationsModule,
+    BrandsModule,
     // AuditModule, // Descomentar si se implementa
   ],
   controllers: [AppController],

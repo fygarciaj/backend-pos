@@ -1,4 +1,3 @@
-// src/main.ts
 import { NestFactory, Reflector } from '@nestjs/core'; // Importar Reflector
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
@@ -50,7 +49,6 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
-  logger.log(`🚀 Swagger UI available at /${apiPrefix}/docs`);
 
   // Prisma Shutdown Hook (como ya tenías)
   await prismaService.enableShutdownHooks(app);
@@ -59,5 +57,6 @@ async function bootstrap() {
   await app.listen(port);
   logger.log(`🚀 Application listening on port ${port}`);
   logger.log(`🚀 API Prefix set to /${apiPrefix}`);
+  logger.log(`🚀 Swagger UI available at /${apiPrefix}/docs`);
 }
 bootstrap();

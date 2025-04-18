@@ -11,7 +11,6 @@ import {
 // Importar Prisma para usar tipos y $queryRaw
 import { Prisma as PrismaTypes } from '@prisma/client';
 
-
 @Injectable()
 export class InventoryService {
   private readonly logger = new Logger(InventoryService.name);
@@ -115,14 +114,15 @@ export class InventoryService {
     skip?: number;
     take?: number;
     // Definir una interfaz para el tipo de resultado esperado de $queryRaw
-  }): Promise<any[]> { // El tipo de retorno será un array de objetos crudos o mapeados
+  }): Promise<any[]> {
+    // El tipo de retorno será un array de objetos crudos o mapeados
     const {
-        lowStockOnly = false, // Default a false
-        categoryId,
-        brandId,
-        search,
-        skip = 0, // Default a 0
-        take = 50, // Default a 50
+      lowStockOnly = false, // Default a false
+      categoryId,
+      brandId,
+      search,
+      skip = 0, // Default a 0
+      take = 50, // Default a 50
     } = params;
 
     const conditions: string[] = ['p."isActive" = TRUE']; // Siempre filtrar por activos
@@ -140,16 +140,19 @@ export class InventoryService {
       conditions.push(`p."brandId" = $${queryParams.length}`);
     }
     if (search) {
-        const searchPattern = `%${search}%`;
-        queryParams.push(searchPattern);
-        const searchIndex = queryParams.length;
-        // Asumiendo que la base de datos soporta ILIKE para case-insensitive
-        // Ajustar a LIKE si es necesario o si la colación ya es case-insensitive
-        conditions.push(`(p."name" ILIKE $${searchIndex} OR p."sku" ILIKE $${searchIndex} OR p."barcode" ILIKE $${searchIndex})`);
+      const searchPattern = `%${search}%`;
+      queryParams.push(searchPattern);
+      const searchIndex = queryParams.length;
+      // Asumiendo que la base de datos soporta ILIKE para case-insensitive
+      // Ajustar a LIKE si es necesario o si la colación ya es case-insensitive
+      conditions.push(
+        `(p."name" ILIKE $${searchIndex} OR p."sku" ILIKE $${searchIndex} OR p."barcode" ILIKE $${searchIndex})`,
+      );
     }
 
     // Construir la cláusula WHERE
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Construir la consulta SQL cruda
     // Seleccionamos los campos necesarios y unimos con Category y Brand
@@ -179,34 +182,43 @@ export class InventoryService {
     queryParams.push(take);
     queryParams.push(skip);
 
-    this.logger.debug(`Executing raw query for stock report: ${rawQuery} with params: ${JSON.stringify(queryParams)}`);
+    this.logger.debug(
+      `Executing raw query for stock report: ${rawQuery} with params: ${JSON.stringify(queryParams)}`,
+    );
 
     try {
-        const result: any[] = await this.prisma.$queryRaw(rawQuery, ...queryParams);
+      const result: any[] = await this.prisma.$queryRaw(
+        rawQuery,
+        ...queryParams,
+      );
 
-        // Mapear el resultado crudo a una estructura más amigable si es necesario
-        // (similar al 'select' original)
-        return result.map(row => ({
-            id: row.id,
-            name: row.name,
-            sku: row.sku,
-            barcode: row.barcode,
-            currentStock: row.currentStock,
-            minStock: row.minStock,
-            unitOfMeasure: row.unitOfMeasure,
-            category: {
-                id: row.categoryId,
-                name: row.categoryName,
-            },
-            brand: {
-                id: row.brandId,
-                name: row.brandName,
-            },
-        }));
-
+      // Mapear el resultado crudo a una estructura más amigable si es necesario
+      // (similar al 'select' original)
+      return result.map((row) => ({
+        id: row.id,
+        name: row.name,
+        sku: row.sku,
+        barcode: row.barcode,
+        currentStock: row.currentStock,
+        minStock: row.minStock,
+        unitOfMeasure: row.unitOfMeasure,
+        category: {
+          id: row.categoryId,
+          name: row.categoryName,
+        },
+        brand: {
+          id: row.brandId,
+          name: row.brandName,
+        },
+      }));
     } catch (error) {
-        this.logger.error(`Error executing raw query for stock report: ${error.message}`, error.stack);
-        throw new Error(`Failed to generate current stock report: ${error.message}`);
+      this.logger.error(
+        `Error executing raw query for stock report: ${error.message}`,
+        error.stack,
+      );
+      throw new Error(
+        `Failed to generate current stock report: ${error.message}`,
+      );
     }
   }
 }

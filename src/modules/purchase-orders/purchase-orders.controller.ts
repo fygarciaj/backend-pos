@@ -24,8 +24,8 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { RolesGuard } from '../modules/auth/guards/roles.guard'; // Ajusta ruta
-import { Roles } from '../modules/auth/decorators/roles.decorator'; // Ajusta ruta
+import { RolesGuard } from '../auth/guards/roles.guard'; // Ajusta ruta
+import { Roles } from '../auth/decorators/roles.decorator'; // Ajusta ruta
 import { UserRole, Prisma, PurchaseOrderStatus } from '@prisma/client';
 // JwtAuthGuard es global
 

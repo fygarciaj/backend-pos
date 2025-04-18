@@ -21,10 +21,10 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { RolesGuard } from '../../auth/guards/roles.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
-import { Public } from '../../auth/decorators/public.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { Prisma } from '@prisma/client'; // Importar Prisma para tipos
 
 @ApiTags('Brands')

@@ -20,8 +20,8 @@ import {
 } from '@nestjs/swagger';
 // JwtAuthGuard ya es global, no necesitamos importarlo aquí a menos que quitemos el global
 // import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/roles.guard'; // Importar RolesGuard
-import { Roles } from '../../auth/decorators/roles.decorator'; // Importar Roles decorator
+import { RolesGuard } from '../auth/guards/roles.guard'; // Importar RolesGuard
+import { Roles } from '../auth/decorators/roles.decorator'; // Importar Roles decorator
 import { UserRole } from '@prisma/client'; // Importar enum de roles
 
 @ApiTags('Users')

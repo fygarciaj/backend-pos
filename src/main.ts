@@ -4,6 +4,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from './database/prisma.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 //import { RolesGuard } from './modules/auth/guards/roles.guard';
 // Importar el guard
 

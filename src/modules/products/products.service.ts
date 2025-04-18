@@ -1,0 +1,238 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../../database/prisma.service'; // Ajusta la ruta si es necesario
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+import { Prisma, Product } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library'; // Importa Decimal
+
+@Injectable()
+export class ProductsService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(createProductDto: CreateProductDto): Promise<Product> {
+    const { images, categoryId, brandId, costPrice, sellingPrice, weight, ...productData } = createProductDto;
+
+    // Convertir precios y peso a Decimal si vienen como string desde el DTO
+    const costPriceDecimal = new Decimal(costPrice);
+    const sellingPriceDecimal = new Decimal(sellingPrice);
+    const weightDecimal = weight ? new Decimal(weight) : null;
+
+
+    const productCreateInput: Prisma.ProductCreateInput = {
+      ...productData,
+      costPrice: costPriceDecimal,
+      sellingPrice: sellingPriceDecimal,
+      weight: weightDecimal,
+      category: { connect: { id: categoryId } },
+      brand: { connect: { id: brandId } },
+      // Conectar ubicación si se proporciona
+      ...(createProductDto.locationId && { location: { connect: { id: createProductDto.locationId } } }),
+      // Crear imágenes si se proporcionan
+      ...(images && images.length > 0 && {
+        images: {
+          create: images.map(img => ({
+            url: img.url,
+            altText: img.altText,
+            order: img.order,
+          })),
+        },
+      }),
+    };
+
+    return this.prisma.product.create({
+      data: productCreateInput,
+      include: { images: true, category: true, brand: true, location: true }, // Incluir relaciones en la respuesta
+    });
+  }
+
+  async findAll(params: {
+    skip?: number;
+    take?: number;
+    cursor?: Prisma.ProductWhereUniqueInput;
+    where?: Prisma.ProductWhereInput;
+    orderBy?: Prisma.ProductOrderByWithRelationInput;
+  }): Promise<Product[]> {
+    const { skip, take, cursor, where, orderBy } = params;
+    return this.prisma.product.findMany({
+      skip,
+      take,
+      cursor,
+      where,
+      orderBy,
+      include: { category: true, brand: true, images: true, location: true }, // Incluir relaciones básicas
+    });
+  }
+
+  async findOne(id: string): Promise<Product | null> {
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        brand: true,
+        images: { orderBy: { order: 'asc' } }, // Ordenar imágenes
+        location: true,
+        // Podrías incluir más relaciones si es necesario aquí
+        // saleDetails: true, // Cuidado con cargar demasiados datos por defecto
+      },
+    });
+    if (!product) {
+      throw new NotFoundException(`Product with ID "${id}" not found`);
+    }
+    return product;
+  }
+
+  async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
+     // Primero, verifica si el producto existe
+     await this.findOne(id); // Esto lanzará NotFoundException si no existe
+
+     const { images, categoryId, brandId, costPrice, sellingPrice, weight, ...productData } = updateProductDto;
+
+     // Prepara los datos para actualizar, convirtiendo decimales si existen
+     const dataToUpdate: Prisma.ProductUpdateInput = { ...productData };
+     if (costPrice !== undefined) dataToUpdate.costPrice = new Decimal(costPrice);
+     if (sellingPrice !== undefined) dataToUpdate.sellingPrice = new Decimal(sellingPrice);
+     if (weight !== undefined) dataToUpdate.weight = new Decimal(weight);
+     if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
+     if (brandId) dataToUpdate.brand = { connect: { id: brandId } };
+     if (updateProductDto.locationId !== undefined) { // Permite desconectar o conectar ubicación
+        dataToUpdate.location = updateProductDto.locationId ? { connect: { id: updateProductDto.locationId } } : { disconnect: true };
+     }
+
+     // Manejo de imágenes (ejemplo simple: reemplazar todas las imágenes)
+     // Una lógica más compleja podría permitir añadir/eliminar imágenes individuales
+     if (images) {
+        // Borrar imágenes existentes y crear las nuevas en una transacción
+        return this.prisma.$transaction(async (tx) => {
+            await tx.productImage.deleteMany({ where: { productId: id } });
+            const updatedProduct = await tx.product.update({
+                where: { id },
+                data: {
+                    ...dataToUpdate,
+                    images: {
+                        create: images.map(img => ({
+                            url: img.url,
+                            altText: img.altText,
+                            order: img.order,
+                        })),
+                    },
+                },
+                include: { images: true, category: true, brand: true, location: true },
+            });
+            return updatedProduct;
+        });
+
+     } else {
+        // Actualizar sin tocar las imágenes si no se proporcionan en el DTO
+        return this.prisma.product.update({
+            where: { id },
+            data: dataToUpdate,
+            include: { images: true, category: true, brand: true, location: true },
+        });
+     }
+  }
+
+  async remove(id: string): Promise<Product> {
+    // Primero, verifica si el producto existe
+    await this.findOne(id); // Esto lanzará NotFoundException si no existe
+
+    // Considera las implicaciones de borrar un producto (historial de ventas, etc.)
+    // Prisma por defecto no permitirá borrar si hay relaciones restrictivas.
+    // Podrías necesitar lógica adicional aquí (ej: marcar como inactivo en lugar de borrar)
+    try {
+        return await this.prisma.product.delete({
+            where: { id },
+        });
+    } catch (error) {
+        // Manejar errores específicos de Prisma si es necesario (ej: P2003 Foreign key constraint failed)
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2025') { // Record to delete does not exist. (Ya manejado por findOne)
+                 throw new NotFoundException(`Product with ID "${id}" not found`);
+            }
+            // Podrías lanzar un BadRequestException si hay dependencias que impiden borrar
+             console.error("Prisma Error Code:", error.code);
+             throw new Error(`Could not delete product due to dependencies or other error.`);
+        }
+        throw error; // Re-lanzar otros errores
+    }
+  }
+
+  // --- Métodos Adicionales (Ejemplos) ---
+
+  async findByBarcode(barcode: string): Promise<Product | null> {
+    const product = await this.prisma.product.findUnique({
+        where: { barcode },
+        include: { category: true, brand: true, images: true, location: true },
+    });
+     if (!product) {
+      throw new NotFoundException(`Product with barcode "${barcode}" not found`);
+    }
+    return product;
+  }
+
+  async searchByName(term: string): Promise<Product[]> {
+      return this.prisma.product.findMany({
+          where: {
+              OR: [
+                  { name: { contains: term, mode: 'insensitive' } }, // Búsqueda insensible a mayúsculas/minúsculas (depende de DB)
+                  { description: { contains: term, mode: 'insensitive' } },
+                  { tags: { contains: term, mode: 'insensitive' } }, // Asumiendo tags como texto
+              ],
+              isActive: true, // Opcional: buscar solo activos
+          },
+          include: { category: true, brand: true },
+          take: 20, // Limitar resultados
+      });
+  }
+
+   async updateStock(productId: string, quantityChange: number, movementType: InventoryMovementType, userId?: string, reason?: string, relatedSaleId?: string, relatedPurchaseOrderId?: string, relatedReturnId?: string): Promise<Product> {
+    // Este método debería ejecutarse dentro de una transacción junto con la creación del InventoryMovement
+    return this.prisma.$transaction(async (tx) => {
+      const product = await tx.product.findUnique({
+        where: { id: productId },
+      });
+
+      if (!product) {
+        throw new NotFoundException(`Product with ID "${productId}" not found for stock update.`);
+      }
+
+      const newStock = product.currentStock + quantityChange;
+
+      // Validar stock mínimo/máximo si es necesario
+      // if (newStock < product.minStock) { /* Lógica de alerta */ }
+      // if (product.maxStock !== null && newStock > product.maxStock) { /* Lógica de error o alerta */ }
+      if (newStock < 0 && movementType === InventoryMovementType.OUT_SALE) {
+           throw new Error(`Insufficient stock for product ${product.name} (ID: ${productId}). Required: ${Math.abs(quantityChange)}, Available: ${product.currentStock}`);
+      }
+
+
+      // Crear el registro de movimiento de inventario
+      await tx.inventoryMovement.create({
+        data: {
+          productId: productId,
+          quantity: quantityChange,
+          type: movementType,
+          userId: userId, // Puede ser null si es un proceso automático
+          reason: reason,
+          relatedSaleId: relatedSaleId,
+          relatedPurchaseOrderId: relatedPurchaseOrderId,
+          relatedReturnId: relatedReturnId,
+        },
+      });
+
+      // Actualizar el stock del producto
+      const updatedProduct = await tx.product.update({
+        where: { id: productId },
+        data: { currentStock: newStock },
+      });
+
+      // Aquí podrías emitir eventos si tienes alertas de stock bajo, etc.
+      if (updatedProduct.currentStock <= updatedProduct.minStock) {
+          console.warn(`LOW STOCK ALERT: Product ${updatedProduct.name} (ID: ${productId}) reached minimum stock level (${updatedProduct.currentStock}/${updatedProduct.minStock})`);
+          // TODO: Implementar sistema de notificaciones (email, dashboard, etc.)
+      }
+
+
+      return updatedProduct;
+    });
+  }
+}

@@ -1,0 +1,131 @@
+src/
+├── app.controller.ts         # Controlador raíz (opcional)
+├── app.module.ts             # Módulo raíz de la aplicación
+├── app.service.ts            # Servicio raíz (opcional)
+├── main.ts                   # Archivo de entrada de la aplicación (bootstrap)
+│
+├── auth/                     # Módulo de Autenticación y Autorización
+│   ├── dto/                  # DTOs para login, registro, etc.
+│   │   └── login.dto.ts
+│   ├── guards/               # Guards de autenticación (ej: JwtAuthGuard)
+│   │   └── jwt-auth.guard.ts
+│   ├── strategies/           # Estrategias de Passport (ej: JwtStrategy)
+│   │   └── jwt.strategy.ts
+│   ├── auth.controller.ts
+│   ├── auth.module.ts
+│   ├── auth.service.ts
+│   └── constants.ts          # Constantes para JWT (secret, expiration)
+│
+├── users/                    # Módulo de Usuarios y Roles
+│   ├── dto/
+│   │   ├── create-user.dto.ts
+│   │   └── update-user.dto.ts
+│   ├── entities/             # (Opcional si se usan clases para entidades además de Prisma)
+│   │   └── user.entity.ts
+│   ├── users.controller.ts
+│   ├── users.module.ts
+│   └── users.service.ts
+│
+├── products/                 # Módulo de Productos
+│   ├── dto/
+│   │   ├── create-product.dto.ts
+│   │   └── update-product.dto.ts
+│   ├── products.controller.ts
+│   ├── products.module.ts
+│   └── products.service.ts
+│
+├── categories/               # Módulo de Categorías
+│   ├── dto/
+│   │   ├── create-category.dto.ts
+│   │   └── update-category.dto.ts
+│   ├── categories.controller.ts
+│   ├── categories.module.ts
+│   └── categories.service.ts
+│
+├── brands/                   # Módulo de Marcas Comerciales
+│   ├── dto/
+│   │   ├── create-brand.dto.ts
+│   │   └── update-brand.dto.ts
+│   ├── brands.controller.ts
+│   ├── brands.module.ts
+│   └── brands.service.ts
+│
+├── sales/                    # Módulo de Ventas y Detalles de Venta
+│   ├── dto/
+│   │   ├── create-sale.dto.ts
+│   │   └── update-sale-status.dto.ts
+│   ├── sales.controller.ts
+│   ├── sales.module.ts
+│   └── sales.service.ts
+│
+├── returns/                  # Módulo de Devoluciones/Reembolsos
+│   ├── dto/
+│   │   └── create-return.dto.ts
+│   ├── returns.controller.ts
+│   ├── returns.module.ts
+│   └── returns.service.ts
+│
+├── customers/                # Módulo de Clientes
+│   ├── dto/
+│   │   ├── create-customer.dto.ts
+│   │   └── update-customer.dto.ts
+│   ├── customers.controller.ts
+│   ├── customers.module.ts
+│   └── customers.service.ts
+│
+├── suppliers/                # Módulo de Proveedores
+│   ├── dto/
+│   │   ├── create-supplier.dto.ts
+│   │   └── update-supplier.dto.ts
+│   ├── suppliers.controller.ts
+│   ├── suppliers.module.ts
+│   └── suppliers.service.ts
+│
+├── inventory/                # Módulo de Movimientos de Inventario y Ajustes
+│   ├── dto/
+│   │   └── create-inventory-movement.dto.ts
+│   ├── inventory.controller.ts
+│   ├── inventory.module.ts
+│   └── inventory.service.ts
+│
+├── purchase-orders/          # Módulo de Órdenes de Compra
+│   ├── dto/
+│   │   ├── create-purchase-order.dto.ts
+│   │   └── update-purchase-order.dto.ts
+│   ├── purchase-orders.controller.ts
+│   ├── purchase-orders.module.ts
+│   └── purchase-orders.service.ts
+│
+├── reports/                  # Módulo de Reportes
+│   ├── dto/                  # DTOs para filtros de reportes
+│   ├── reports.controller.ts
+│   ├── reports.module.ts
+│   └── reports.service.ts
+│
+├── config/                   # Módulo o Lógica de Configuración (env vars)
+│   └── configuration.ts
+│
+├── common/                   # Elementos comunes (Decorators, Pipes, Filters, Interfaces)
+│   ├── decorators/
+│   ├── dto/                  # DTOs comunes (ej: Paginación)
+│   ├── filters/              # Filtros de excepciones globales
+│   ├── guards/               # Guards comunes (ej: RolesGuard)
+│   ├── interfaces/           # Interfaces comunes
+│   └── pipes/                # Pipes comunes (ej: ParseObjectIdPipe si usaras Mongo)
+│
+├── database/                 # Módulo para la conexión y servicio de Prisma
+│   ├── prisma.module.ts
+│   └── prisma.service.ts     # Servicio para interactuar con Prisma Client
+│
+├── audit/                    # Módulo para Logs de Auditoría (Opcional)
+│   ├── audit.interceptor.ts  # Interceptor para registrar actividad
+│   ├── audit.module.ts
+│   └── audit.service.ts      # Servicio para guardar logs
+│
+└── locations/                # Módulo para Ubicaciones Físicas (Opcional)
+    ├── dto/
+    │   ├── create-location.dto.ts
+    │   └── update-location.dto.ts
+    ├── locations.controller.ts
+    ├── locations.module.ts
+    └── locations.service.ts

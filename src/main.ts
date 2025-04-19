@@ -60,4 +60,5 @@ async function bootstrap() {
   logger.log(`🚀 API Prefix set to /${apiPrefix}`);
   logger.log(`🚀 Swagger UI available at /${apiPrefix}/docs`);
 }
-bootstrap();
+
+void bootstrap();

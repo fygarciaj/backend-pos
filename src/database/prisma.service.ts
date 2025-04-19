@@ -28,11 +28,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     this.logger.log('Prisma Client Connected');
 
     // Escuchar eventos de query de Prisma
-    this.$on('query', (e: Prisma.QueryEvent) => {
-      this.logger.debug(`Query: ${e.query}`);
-      this.logger.debug(`Params: ${e.params}`);
-      this.logger.debug(`Duration: ${e.duration} ms`);
-    });
+    // this.$on('query', (e: Prisma.QueryEvent) => {
+    //   this.logger.debug(`Query: ${e.query}`);
+    //   this.logger.debug(`Params: ${e.params}`);
+    //   this.logger.debug(`Duration: ${e.duration} ms`);
+    // });
   }
 
   enableShutdownHooks(app: INestApplication) {

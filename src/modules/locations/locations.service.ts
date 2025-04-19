@@ -141,7 +141,7 @@ export class LocationsService {
   async assignProductToLocation(
     assignDto: AssignProductLocationDto,
   ): Promise<ProductLocation | Product> {
-    const { productId, locationId, quantityInLocation } = assignDto;
+    const { productId, locationId, quantityAtLocation } = assignDto;
 
     // Validar que producto y ubicación existen
     const product = await this.prisma.product.findUnique({
@@ -158,16 +158,16 @@ export class LocationsService {
       );
 
     // --- Opción 1: Usar la tabla intermedia ProductLocation ---
-    if (quantityInLocation !== undefined) {
+    if (quantityAtLocation !== undefined) {
       this.logger.log(
-        `Assigning/Updating Product ${productId} to Location ${locationId} with quantity ${quantityInLocation}`,
+        `Assigning/Updating Product ${productId} to Location ${locationId} with quantity ${quantityAtLocation}`,
       );
       try {
         // Usar upsert para crear o actualizar la entrada en ProductLocation
         return await this.prisma.productLocation.upsert({
           where: { productId_locationId: { productId, locationId } },
-          update: { quantityInLocation },
-          create: { productId, locationId, quantityInLocation },
+          update: { quantityAtLocation },
+          create: { productId, locationId, quantityAtLocation },
           include: { product: true, location: true }, // Incluir relaciones en la respuesta
         });
       } catch (error) {
@@ -196,16 +196,16 @@ export class LocationsService {
     locationId: string,
     updateDto: UpdateProductLocationQuantityDto,
   ): Promise<ProductLocation> {
-    const { quantityInLocation } = updateDto;
+    const { quantityAtLocation } = updateDto;
     this.logger.log(
-      `Updating quantity for Product ${productId} in Location ${locationId} to ${quantityInLocation}`,
+      `Updating quantity for Product ${productId} in Location ${locationId} to ${quantityAtLocation}`,
     );
 
     try {
       // Usar update con manejo de error si no existe la combinación
       return await this.prisma.productLocation.update({
         where: { productId_locationId: { productId, locationId } },
-        data: { quantityInLocation },
+        data: { quantityAtLocation },
         include: { product: true, location: true },
       });
     } catch (error) {
@@ -296,7 +296,7 @@ export class LocationsService {
     primaryLocationProducts.forEach((p) => {
       productMap.set(p.id, {
         ...p,
-        quantityInLocation: null,
+        quantityAtLocation: null,
         source: 'primary',
       });
     });
@@ -306,14 +306,14 @@ export class LocationsService {
         // Solo incluir si el producto está activo
         const existing = productMap.get(pl.productId);
         if (existing) {
-          existing.quantityInLocation = pl.quantityInLocation;
+          existing.quantityAtLocation = pl.quantityAtLocation;
           existing.source = 'both'; // O actualizar como prefieras
         } else {
           productMap.set(pl.productId, {
             id: pl.productId,
             name: pl.product.name,
             sku: pl.product.sku,
-            quantityInLocation: pl.quantityInLocation,
+            quantityAtLocation: pl.quantityAtLocation,
             source: 'specific',
           });
         }

@@ -91,7 +91,11 @@ export class UsersService {
       return { data: users, count };
     } catch (error) {
       // Log error
-      throw new InternalServerErrorException('Could not retrieve users.');
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException(
+        `Could not retrieve users. ${errorMessage}`,
+      );
     }
   }
 

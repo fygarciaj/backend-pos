@@ -6,7 +6,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service'; // Ajusta ruta
+import { PrismaService } from '../../database/prisma.service'; // Adjusted path
 import { ProductsService } from '../modules/products/products.service'; // Necesario para stock
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import {
@@ -18,7 +18,7 @@ import {
   PurchaseOrder,
   PurchaseOrderItem,
   PurchaseOrderStatus,
-  InventoryMovementType,
+  InventoryMovement,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -286,7 +286,7 @@ export class PurchaseOrdersService {
               await this.productsService.updateStock(
                 poItem.productId,
                 quantityReceivedNow, // Cantidad positiva para entrada
-                InventoryMovementType.IN_PURCHASE,
+                InventoryMovement.IN_PURCHASE,
                 updatedByUserId,
                 `Received from PO ${id}`, // reason
                 undefined, // relatedSaleId

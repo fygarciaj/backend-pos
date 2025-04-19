@@ -216,17 +216,13 @@ export class SuppliersService {
     // Verificar si el proveedor existe
     const supplierToDelete = await this.findOne(id, true); // Incluir relaciones para verificar
 
-    if (!supplierToDelete) {
-      throw new NotFoundException(`Supplier with ID "${id}" not found`);
-    }
-
-    // Verificar si tiene órdenes de compra asociadas
     if (
-      (supplierToDelete as any)._count &&
-      (supplierToDelete as any)._count.purchaseOrders > 0
+      supplierToDelete &&
+      '_count' in supplierToDelete &&
+      supplierToDelete._count?.purchaseOrders > 0
     ) {
       throw new ConflictException(
-        `Cannot delete supplier "${supplierToDelete.name}" because they have ${(supplierToDelete as any)._count.purchaseOrders} associated purchase orders. Please reassign or delete them first.`,
+        `Cannot delete supplier "${supplierToDelete.name}" because they have ${supplierToDelete._count.purchaseOrders} associated purchase orders. Please reassign or delete them first.`,
       );
     }
 
@@ -243,11 +239,13 @@ export class SuppliersService {
     }
   }
 
-  // Helper para manejar errores de base de datos
-  private handleDbError(error: any, context?: any): never {
+  // Updated handleDbError to ensure type safety
+  private handleDbError(
+    error: unknown,
+    context?: { name?: string; email?: string },
+  ): never {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
-        // Unique constraint violation
         const fields = error.meta?.target as string[];
         let message = 'Unique constraint violation.';
         if (fields?.includes('name') && context?.name)
@@ -257,12 +255,12 @@ export class SuppliersService {
         throw new ConflictException(message);
       }
       if (error.code === 'P2025') {
-        // Record not found
         throw new NotFoundException('The supplier record was not found.');
       }
-      // P2003 (Foreign key constraint) se maneja con la verificación de órdenes de compra
     }
-    this.logger.error(`Database Error: ${error.message}`, error.stack);
+    if (error instanceof Error) {
+      this.logger.error(`Database Error: ${error.message}`, error.stack);
+    }
     throw new InternalServerErrorException(
       'An unexpected database error occurred.',
     );

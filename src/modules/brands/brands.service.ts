@@ -64,7 +64,7 @@ export class BrandsService {
       take,
       cursor,
       where,
-      orderBy: orderBy ?? { order: 'asc', name: 'asc' }, // Orden por defecto
+      orderBy: Array.isArray(orderBy) ? orderBy : [orderBy ?? { name: 'asc' }], // Ajuste para cumplir con el tipo
       include: {
         _count: includeProductsCount
           ? { select: { products: true } }
@@ -115,12 +115,12 @@ export class BrandsService {
       const currentBrand = await this.prisma.brand.findUnique({
         where: { id },
       });
-      const finalName = name ?? currentBrand.name;
+      const finalName = name ?? currentBrand?.name; // Manejo de posible null
       const finalSlug = slug
         ? slugify(slug)
         : name
           ? slugify(name)
-          : currentBrand.slug;
+          : currentBrand?.slug; // Manejo de posible null
 
       // Verificar si el nuevo nombre o slug ya existen en OTRA marca
       const existingBrand = await this.prisma.brand.findFirst({
@@ -158,6 +158,9 @@ export class BrandsService {
   async remove(id: string): Promise<Brand> {
     // Verificar si la marca existe
     const brandToDelete = await this.findOne(id);
+    if (!brandToDelete) {
+      throw new NotFoundException(`Brand with ID "${id}" not found`);
+    } // Manejo de posible null
 
     // Verificar si tiene productos asociados
     // Nota: La relación con SupplierBrand (muchos-a-muchos) se borraría automáticamente si se borra la marca,

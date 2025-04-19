@@ -44,7 +44,7 @@ export class AuthService {
     if (user && isPasswordMatching) {
       this.logger.log(`User validation successful: ${username}`);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...result } = user; // Excluir contraseña del objeto retornado
+      const { passwordHash, ...result } = user; // Excluir contraseña del objeto retornado
       return result;
     }
 
@@ -74,7 +74,8 @@ export class AuthService {
     try {
       await this.usersService.update(user.id, { lastLogin: new Date() });
     } catch (error: unknown) {
-      const errorStack = error instanceof Error ? error.stack : 'No stack trace available';
+      const errorStack =
+        error instanceof Error ? error.stack : 'No stack trace available';
       this.logger.error(
         `Failed to update lastLogin for user ${user.id}`,
         errorStack,

@@ -78,7 +78,7 @@ export class CustomersService {
         sales: includeSales
           ? {
               take: 10, // Limitar número de ventas incluidas
-              orderBy: { saleDate: 'desc' },
+              orderBy: { createdAt: 'desc' },
               select: { id: true, saleDate: true, total: true, status: true }, // Seleccionar campos clave de la venta
             }
           : false,
@@ -117,8 +117,9 @@ export class CustomersService {
       dataToUpdate.email = null;
     }
 
+    // Convertir Decimal a un número compatible
     if (accountBalance !== undefined) {
-      dataToUpdate.accountBalance = new Decimal(accountBalance);
+      dataToUpdate.accountBalance = parseFloat(accountBalance.toString());
     }
 
     try {
@@ -139,7 +140,11 @@ export class CustomersService {
     // Verificar si tiene ventas asociadas
     // En lugar de impedir borrar, podríamos anonimizar o marcar como inactivo.
     // Por ahora, impedimos si tiene ventas.
-    if (customerToDelete._count && customerToDelete._count.sales > 0) {
+    if (
+      customerToDelete &&
+      customerToDelete._count &&
+      customerToDelete._count.sales > 0
+    ) {
       throw new ConflictException(
         `Cannot delete customer "${customerToDelete.fullName}" because they have ${customerToDelete._count.sales} associated sales. Consider deactivating the customer instead.`,
       );

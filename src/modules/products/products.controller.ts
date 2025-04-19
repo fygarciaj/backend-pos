@@ -23,8 +23,8 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 // JwtAuthGuard es global
-import { RolesGuard } from '../../auth/guards/roles.guard'; // Importar RolesGuard
-import { Roles } from '../../auth/decorators/roles.decorator'; // Importar Roles decorator
+import { RolesGuard } from '../auth/guards/roles.guard'; // Importar RolesGuard
+import { Roles } from '../auth/decorators/roles.decorator'; // Importar Roles decorator
 import { UserRole } from '@prisma/client'; // Importar enum de roles
 
 @ApiTags('Products')

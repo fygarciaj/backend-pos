@@ -73,10 +73,11 @@ export class AuthService {
     // Opcional: Actualizar lastLogin del usuario
     try {
       await this.usersService.update(user.id, { lastLogin: new Date() });
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorStack = error instanceof Error ? error.stack : 'No stack trace available';
       this.logger.error(
         `Failed to update lastLogin for user ${user.id}`,
-        error.stack,
+        errorStack,
       );
       // No fallar el login si esto falla, pero sí loguearlo.
     }

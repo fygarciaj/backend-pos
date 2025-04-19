@@ -44,12 +44,40 @@ export class AuthController {
     description: 'Unauthorized. Invalid credentials.',
   })
   async login(
-    @Request() req,
-    @Body() loginDto: LoginDto,
+    @Request()
+    req: {
+      user: Omit<
+        {
+          id: string;
+          username: string;
+          passwordHash: string;
+          fullName: string;
+          role: UserRole;
+          isActive: boolean;
+          createdAt: Date;
+          updatedAt: Date;
+        },
+        'password'
+      >;
+    },
   ): Promise<LoginResponse> {
     // Si LocalAuthGuard pasa, significa que req.user contiene el usuario validado por LocalStrategy
     // loginDto solo se usa aquí para la documentación de Swagger y validación de entrada
-    return this.authService.login(req.user);
+    return this.authService.login(
+      req.user as Omit<
+        {
+          id: string;
+          username: string;
+          passwordHash: string;
+          fullName: string;
+          role: UserRole;
+          isActive: boolean;
+          createdAt: Date;
+          updatedAt: Date;
+        },
+        'password'
+      >,
+    );
   }
 
   // --- Profile Endpoint (Ejemplo de ruta protegida) ---
@@ -65,7 +93,7 @@ export class AuthController {
     status: 401,
     description: 'Unauthorized. Token missing or invalid.',
   })
-  getProfile(@Request() req) {
+  getProfile(@Request() req: { user: any }): any {
     // JwtAuthGuard (a través de JwtStrategy) adjunta el payload validado (o el usuario) a req.user
     return req.user; // Devuelve la información del usuario adjuntada por JwtStrategy
   }

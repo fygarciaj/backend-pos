@@ -14,7 +14,7 @@ import { JwtStrategy } from './strategies/jwt.strategy'; // Crearemos esto
     PassportModule.register({ defaultStrategy: 'jwt' }), // Registrar Passport, JWT como default
     JwtModule.registerAsync({
       imports: [ConfigModule], // Importar ConfigModule para usar ConfigService
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_SECRET'), // Leer secreto desde .env
         signOptions: {
           expiresIn: configService.get<string>('JWT_EXPIRATION_TIME', '60m'), // Leer tiempo de expiración o usar default

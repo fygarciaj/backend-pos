@@ -61,7 +61,6 @@ export class LocationsController {
     UserRole.MANAGER,
     UserRole.INVENTORY_MANAGER,
     UserRole.CASHIER,
-    UserRole.REPORTS_VIEWER,
   ) // Amplio acceso para ver
   @ApiOperation({ summary: 'Get a list of locations (Authenticated Users)' })
   @ApiQuery({ name: 'skip', required: false, type: Number })
@@ -93,7 +92,6 @@ export class LocationsController {
     UserRole.MANAGER,
     UserRole.INVENTORY_MANAGER,
     UserRole.CASHIER,
-    UserRole.REPORTS_VIEWER,
   )
   @ApiOperation({ summary: 'Get a location by ID (Authenticated Users)' })
   @ApiParam({ name: 'id', description: 'UUID of the location' })
@@ -208,7 +206,6 @@ export class LocationsController {
     UserRole.MANAGER,
     UserRole.INVENTORY_MANAGER,
     UserRole.CASHIER,
-    UserRole.REPORTS_VIEWER,
   )
   @ApiOperation({
     summary:

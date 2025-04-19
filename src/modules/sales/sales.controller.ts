@@ -52,7 +52,10 @@ export class SalesController {
     status: 409,
     description: 'Conflict (e.g., Insufficient Stock).',
   })
-  create(@Body() createSaleDto: CreateSaleDto, @Request() req) {
+  create(
+    @Body() createSaleDto: CreateSaleDto,
+    @Request() req: { user: { userId: string } },
+  ) {
     const userId = req.user.userId; // Obtener ID del usuario desde el payload del token JWT
     if (!userId) {
       throw new Error('User ID not found in token payload.'); // Seguridad extra
@@ -62,8 +65,8 @@ export class SalesController {
 
   @Get()
   @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.REPORTS_VIEWER) // Roles que pueden ver lista de ventas
-  @ApiOperation({ summary: 'Get a list of sales (Admin/Manager/Reports Only)' })
+  @Roles(UserRole.ADMIN, UserRole.MANAGER) // Solo roles válidos
+  @ApiOperation({ summary: 'Get a list of sales (Admin/Manager Only)' })
   @ApiQuery({ name: 'skip', required: false, type: Number })
   @ApiQuery({ name: 'take', required: false, type: Number })
   @ApiQuery({
@@ -81,7 +84,7 @@ export class SalesController {
   @ApiQuery({
     name: 'status',
     required: false,
-    enum: UserRole,
+    type: String,
     description: 'Filter by sale status',
   })
   @ApiQuery({
@@ -104,7 +107,7 @@ export class SalesController {
     @Query('take') take?: string,
     @Query('customerId') customerId?: string,
     @Query('userId') userId?: string,
-    @Query('status') status?: Prisma.SaleStatus,
+    @Query('status') status?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
@@ -113,9 +116,9 @@ export class SalesController {
     if (userId) where.userId = userId;
     if (status) where.status = status;
     if (startDate || endDate) {
-      where.saleDate = {};
-      if (startDate) where.saleDate.gte = new Date(startDate);
-      if (endDate) where.saleDate.lte = new Date(endDate);
+      where.saleTimestamp = {};
+      if (startDate) where.saleTimestamp.gte = new Date(startDate);
+      if (endDate) where.saleTimestamp.lte = new Date(endDate);
     }
 
     return this.salesService.findAll({
@@ -128,15 +131,8 @@ export class SalesController {
 
   @Get(':id')
   @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.ADMIN,
-    UserRole.MANAGER,
-    UserRole.CASHIER,
-    UserRole.REPORTS_VIEWER,
-  ) // Roles que pueden ver detalles
-  @ApiOperation({
-    summary: 'Get a sale by ID (Admin/Manager/Cashier/Reports Only)',
-  })
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER) // Solo roles válidos
+  @ApiOperation({ summary: 'Get a sale by ID (Admin/Manager/Cashier Only)' })
   @ApiParam({ name: 'id', description: 'UUID of the sale' })
   @ApiResponse({ status: 200, description: 'Sale details.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
@@ -164,7 +160,7 @@ export class SalesController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSaleDto: UpdateSaleDto,
-    @Request() req,
+    @Request() req: { user: { userId: string } },
   ) {
     const userId = req.user.userId; // Obtener ID del usuario que realiza la actualización
     return this.salesService.update(id, updateSaleDto, userId);

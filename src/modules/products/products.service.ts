@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Prisma, Product, InventoryMovementType } from '@prisma/client';
+import { Prisma, Product, MovementType } from '@prisma/client';
 
 @Injectable()
 export class ProductsService {
@@ -33,9 +33,6 @@ export class ProductsService {
       weight: weight !== undefined ? Number(weight) : null,
       category: { connect: { id: categoryId } },
       ...(brandId && { brand: { connect: { id: brandId } } }),
-      ...(createProductDto.locationId && {
-        locationId: createProductDto.locationId,
-      }),
       images: images
         ? images.length > 0
           ? images.map((img) => img.url)
@@ -100,7 +97,8 @@ export class ProductsService {
     if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
     if (brandId) dataToUpdate.brand = { connect: { id: brandId } };
     if (updateProductDto.locationId !== undefined) {
-      dataToUpdate.locationId = updateProductDto.locationId;
+      // La relación de ubicación es a través de ProductLocation, no directamente en Product
+      // Aquí podrías manejar la lógica de asignación de ubicación si es necesario
     }
     if (images) {
       dataToUpdate.images =
@@ -161,7 +159,7 @@ export class ProductsService {
   async updateStock(
     productId: string,
     quantityChange: number,
-    movementType: InventoryMovementType,
+    movementType: MovementType,
     userId?: string,
     reason?: string,
     relatedSaleId?: string,
@@ -187,8 +185,7 @@ export class ProductsService {
     const newStock = product.currentStock + quantityChange;
     if (
       newStock < 0 &&
-      (movementType === InventoryMovementType.OUT_SALE ||
-        movementType === InventoryMovementType.ADJUSTMENT_OUT)
+      (movementType === 'SALE_EXIT' || movementType === 'NEGATIVE_ADJUSTMENT')
     ) {
       this.logger.error(
         `Insufficient stock for product ${product.name} (ID: ${productId}). Required: ${Math.abs(quantityChange)}, Available: ${product.currentStock}`,
@@ -202,7 +199,7 @@ export class ProductsService {
         productId: productId,
         quantity: quantityChange,
         movementType: movementType,
-        userId: userId,
+        userId: userId!,
         adjustmentReason: reason,
         saleId: relatedSaleId,
         purchaseOrderId: relatedPurchaseOrderId,

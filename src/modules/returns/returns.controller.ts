@@ -56,15 +56,18 @@ export class ReturnsController {
     status: 409,
     description: 'Conflict (e.g., Sale already refunded/cancelled).',
   })
-  create(@Body() createReturnDto: CreateReturnDto, @Request() req) {
+  create(
+    @Body() createReturnDto: CreateReturnDto,
+    @Request() req: { user: { userId: string } },
+  ) {
     const userId = req.user.userId;
     return this.returnsService.create(createReturnDto, userId);
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.REPORTS_VIEWER) // Roles que pueden ver lista de devoluciones
+  @Roles(UserRole.ADMIN, UserRole.MANAGER) // Solo roles válidos
   @ApiOperation({
-    summary: 'Get a list of returns (Admin/Manager/Reports Only)',
+    summary: 'Get a list of returns (Admin/Manager Only)',
   })
   @ApiQuery({ name: 'skip', required: false, type: Number, example: 0 })
   @ApiQuery({ name: 'take', required: false, type: Number, example: 20 })
@@ -107,9 +110,9 @@ export class ReturnsController {
     if (originalSaleId) where.originalSaleId = originalSaleId;
     if (processedByUserId) where.processedByUserId = processedByUserId;
     if (startDate || endDate) {
-      where.returnDate = {};
-      if (startDate) where.returnDate.gte = new Date(startDate);
-      if (endDate) where.returnDate.lte = new Date(endDate);
+      where.returnTimestamp = {};
+      if (startDate) where.returnTimestamp.gte = new Date(startDate);
+      if (endDate) where.returnTimestamp.lte = new Date(endDate);
     }
 
     return this.returnsService.findAll({
@@ -121,14 +124,9 @@ export class ReturnsController {
   }
 
   @Get(':id')
-  @Roles(
-    UserRole.ADMIN,
-    UserRole.MANAGER,
-    UserRole.CASHIER,
-    UserRole.REPORTS_VIEWER,
-  ) // Roles que pueden ver detalles
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER) // Solo roles válidos
   @ApiOperation({
-    summary: 'Get a return by ID (Admin/Manager/Cashier/Reports Only)',
+    summary: 'Get a return by ID (Admin/Manager/Cashier Only)',
   })
   @ApiParam({ name: 'id', description: 'UUID of the return record' })
   @ApiResponse({ status: 200, description: 'Return details.' })

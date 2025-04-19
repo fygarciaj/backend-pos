@@ -59,15 +59,9 @@ export class InventoryController {
   }
 
   @Get('movements')
-  @Roles(
-    UserRole.ADMIN,
-    UserRole.MANAGER,
-    UserRole.INVENTORY_MANAGER,
-    UserRole.REPORTS_VIEWER,
-  ) // Roles que pueden ver movimientos
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.INVENTORY_MANAGER) // Roles que pueden ver movimientos
   @ApiOperation({
-    summary:
-      'Get a list of inventory movements (Admin/Manager/Inventory/Reports Only)',
+    summary: 'Get a list of inventory movements (Admin/Manager/Inventory Only)',
   })
   @ApiQuery({ name: 'skip', required: false, type: Number, example: 0 })
   @ApiQuery({ name: 'take', required: false, type: Number, example: 20 })
@@ -132,15 +126,9 @@ export class InventoryController {
   }
 
   @Get('report/current-stock')
-  @Roles(
-    UserRole.ADMIN,
-    UserRole.MANAGER,
-    UserRole.INVENTORY_MANAGER,
-    UserRole.REPORTS_VIEWER,
-  ) // Roles que pueden ver reportes de stock
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.INVENTORY_MANAGER) // Roles que pueden ver reportes de stock
   @ApiOperation({
-    summary:
-      'Get current stock levels report (Admin/Manager/Inventory/Reports Only)',
+    summary: 'Get current stock levels report (Admin/Manager/Inventory Only)',
   })
   @ApiQuery({ name: 'skip', required: false, type: Number, example: 0 })
   @ApiQuery({ name: 'take', required: false, type: Number, example: 50 })

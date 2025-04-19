@@ -5,7 +5,7 @@ import { AdjustInventoryDto } from './dto/adjust-inventory.dto';
 import {
   Prisma,
   InventoryMovement,
-  InventoryMovementType,
+  MovementType,
   Product,
 } from '@prisma/client';
 // Importar Prisma para usar tipos y $queryRaw
@@ -39,7 +39,7 @@ export class InventoryService {
 
     // Determinar el cambio real en la cantidad basado en el tipo
     const quantityChange =
-      type === InventoryMovementType.ADJUSTMENT_IN ? quantity : -quantity;
+      type === MovementType.POSITIVE_ADJUSTMENT ? quantity : -quantity;
 
     this.logger.log(
       `Attempting stock adjustment for product ${productId} by user ${userId}. Type: ${type}, Quantity Change: ${quantityChange}, Reason: ${reason}`,
@@ -51,7 +51,7 @@ export class InventoryService {
       const updatedProduct = await this.productsService.updateStock(
         productId,
         quantityChange,
-        type, // ADJUSTMENT_IN o ADJUSTMENT_OUT
+        type, // MovementType
         userId,
         reason, // Razón del ajuste
         undefined, // relatedSaleId
@@ -92,7 +92,7 @@ export class InventoryService {
       take,
       cursor,
       where,
-      orderBy: orderBy ?? { movementDate: 'desc' }, // Ordenar por fecha descendente por defecto
+      orderBy: orderBy ?? { timestamp: 'desc' }, // Cambiar movementDate a timestamp
       include: {
         product: { select: { id: true, name: true, sku: true } }, // Incluir info básica del producto
         user: { select: { id: true, username: true, fullName: true } }, // Incluir info básica del usuario
@@ -129,7 +129,7 @@ export class InventoryService {
     const queryParams: any[] = [];
 
     if (lowStockOnly) {
-      conditions.push('p."currentStock" <= p."minStock"');
+      conditions.push('p."currentStock" <= p."minimumStock"'); // Cambiar minStock a minimumStock
     }
     if (categoryId) {
       queryParams.push(categoryId);
@@ -164,7 +164,7 @@ export class InventoryService {
             p.sku,
             p.barcode,
             p."currentStock",
-            p."minStock",
+            p."minimumStock",
             p."unitOfMeasure",
             c.id as "categoryId",
             c.name as "categoryName",
@@ -200,7 +200,7 @@ export class InventoryService {
         sku: row.sku,
         barcode: row.barcode,
         currentStock: row.currentStock,
-        minStock: row.minStock,
+        minimumStock: row.minimumStock,
         unitOfMeasure: row.unitOfMeasure,
         category: {
           id: row.categoryId,

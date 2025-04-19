@@ -39,7 +39,7 @@ export class AuthService {
       throw new UnauthorizedException(`User ${username} is inactive.`); // Lanzar excepción si está inactivo
     }
 
-    const isPasswordMatching = await bcrypt.compare(pass, user.password); // Compara hash
+    const isPasswordMatching = await bcrypt.compare(pass, user.passwordHash); // Compara hash
 
     if (user && isPasswordMatching) {
       this.logger.log(`User validation successful: ${username}`);

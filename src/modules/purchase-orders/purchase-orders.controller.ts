@@ -59,15 +59,9 @@ export class PurchaseOrdersController {
   }
 
   @Get()
-  @Roles(
-    UserRole.ADMIN,
-    UserRole.MANAGER,
-    UserRole.INVENTORY_MANAGER,
-    UserRole.REPORTS_VIEWER,
-  ) // Roles que pueden ver lista
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.INVENTORY_MANAGER) // Roles que pueden ver lista
   @ApiOperation({
-    summary:
-      'Get a list of purchase orders (Admin/Manager/Inventory/Reports Only)',
+    summary: 'Get a list of purchase orders (Admin/Manager/Inventory Only)',
   })
   @ApiQuery({ name: 'skip', required: false, type: Number })
   @ApiQuery({ name: 'take', required: false, type: Number })
@@ -124,15 +118,9 @@ export class PurchaseOrdersController {
   }
 
   @Get(':id')
-  @Roles(
-    UserRole.ADMIN,
-    UserRole.MANAGER,
-    UserRole.INVENTORY_MANAGER,
-    UserRole.REPORTS_VIEWER,
-  ) // Roles que pueden ver detalles
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.INVENTORY_MANAGER) // Roles que pueden ver detalles
   @ApiOperation({
-    summary:
-      'Get a purchase order by ID (Admin/Manager/Inventory/Reports Only)',
+    summary: 'Get a purchase order by ID (Admin/Manager/Inventory Only)',
   })
   @ApiParam({ name: 'id', description: 'UUID of the purchase order' })
   @ApiResponse({ status: 200, description: 'Purchase order details.' })

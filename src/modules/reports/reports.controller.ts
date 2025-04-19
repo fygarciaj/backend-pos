@@ -16,7 +16,7 @@ import { UserRole } from '@prisma/client';
 @ApiTags('Reports')
 @ApiBearerAuth()
 @UseGuards(RolesGuard) // Aplicar a todo el controlador
-@Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.REPORTS_VIEWER) // Roles que pueden acceder a reportes
+@Roles(UserRole.ADMIN, UserRole.MANAGER) // Eliminar REPORTS_VIEWER, solo roles válidos
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}

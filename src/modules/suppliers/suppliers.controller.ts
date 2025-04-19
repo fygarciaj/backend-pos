@@ -49,14 +49,9 @@ export class SuppliersController {
   }
 
   @Get()
-  @Roles(
-    UserRole.ADMIN,
-    UserRole.MANAGER,
-    UserRole.INVENTORY_MANAGER,
-    UserRole.REPORTS_VIEWER,
-  ) // Roles que pueden ver la lista
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.INVENTORY_MANAGER) // Solo roles válidos
   @ApiOperation({
-    summary: 'Get a list of suppliers (Admin/Manager/Inventory/Reports Only)',
+    summary: 'Get a list of suppliers (Admin/Manager/Inventory Only)',
   })
   @ApiQuery({ name: 'skip', required: false, type: Number })
   @ApiQuery({ name: 'take', required: false, type: Number })
@@ -91,8 +86,8 @@ export class SuppliersController {
     @Query('includeRelations') includeRelations?: string,
   ) {
     const where: Prisma.SupplierWhereInput = {};
-    if (name) where.name = { contains: name, mode: 'insensitive' };
-    if (email) where.email = { contains: email, mode: 'insensitive' };
+    if (name) where.name = { contains: name };
+    if (email) where.email = { contains: email };
     if (isActive !== undefined) where.isActive = isActive === 'true';
 
     return this.suppliersService.findAll({
@@ -105,14 +100,9 @@ export class SuppliersController {
   }
 
   @Get(':id')
-  @Roles(
-    UserRole.ADMIN,
-    UserRole.MANAGER,
-    UserRole.INVENTORY_MANAGER,
-    UserRole.REPORTS_VIEWER,
-  ) // Roles que pueden ver detalles
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.INVENTORY_MANAGER) // Solo roles válidos
   @ApiOperation({
-    summary: 'Get a supplier by ID (Admin/Manager/Inventory/Reports Only)',
+    summary: 'Get a supplier by ID (Admin/Manager/Inventory Only)',
   })
   @ApiParam({ name: 'id', description: 'UUID of the supplier' })
   @ApiQuery({

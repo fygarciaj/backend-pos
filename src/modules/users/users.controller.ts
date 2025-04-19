@@ -8,6 +8,7 @@ import {
   Delete,
   ParseUUIDPipe,
   UseGuards, // Importar UseGuards
+  Query, // Importar Query
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -55,7 +56,8 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden (Insufficient Role).' })
   findAll() {
-    return this.usersService.findAll();
+    // Valores por defecto para paginación y sin filtros
+    return this.usersService.findAll({ page: 1, limit: 20 }, {});
   }
 
   @Get(':id')

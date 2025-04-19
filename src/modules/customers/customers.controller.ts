@@ -51,14 +51,9 @@ export class CustomersController {
   }
 
   @Get()
-  @Roles(
-    UserRole.ADMIN,
-    UserRole.MANAGER,
-    UserRole.CASHIER,
-    UserRole.REPORTS_VIEWER,
-  ) // Roles que pueden ver lista
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER) // Roles que pueden ver lista
   @ApiOperation({
-    summary: 'Get a list of customers (Admin/Manager/Cashier/Reports Only)',
+    summary: 'Get a list of customers (Admin/Manager/Cashier Only)',
   })
   @ApiQuery({ name: 'skip', required: false, type: Number, example: 0 })
   @ApiQuery({ name: 'take', required: false, type: Number, example: 20 })
@@ -97,14 +92,9 @@ export class CustomersController {
   }
 
   @Get(':id')
-  @Roles(
-    UserRole.ADMIN,
-    UserRole.MANAGER,
-    UserRole.CASHIER,
-    UserRole.REPORTS_VIEWER,
-  ) // Roles que pueden ver detalles
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER) // Roles que pueden ver detalles
   @ApiOperation({
-    summary: 'Get a customer by ID (Admin/Manager/Cashier/Reports Only)',
+    summary: 'Get a customer by ID (Admin/Manager/Cashier Only)',
   })
   @ApiParam({ name: 'id', description: 'UUID of the customer' })
   @ApiQuery({

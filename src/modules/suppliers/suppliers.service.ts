@@ -216,15 +216,21 @@ export class SuppliersService {
     // Verificar si el proveedor existe
     const supplierToDelete = await this.findOne(id, true); // Incluir relaciones para verificar
 
+    if (!supplierToDelete) {
+      throw new NotFoundException(`Supplier with ID "${id}" not found`);
+    }
+
     // Verificar si tiene órdenes de compra asociadas
-    if (supplierToDelete._count && supplierToDelete._count.purchaseOrders > 0) {
+    if (
+      (supplierToDelete as any)._count &&
+      (supplierToDelete as any)._count.purchaseOrders > 0
+    ) {
       throw new ConflictException(
-        `Cannot delete supplier "${supplierToDelete.name}" because they have ${supplierToDelete._count.purchaseOrders} associated purchase orders. Please reassign or delete them first.`,
+        `Cannot delete supplier "${supplierToDelete.name}" because they have ${(supplierToDelete as any)._count.purchaseOrders} associated purchase orders. Please reassign or delete them first.`,
       );
     }
 
     // Si no hay dependencias, proceder a borrar
-    // Prisma manejará el borrado en cascada de SupplierBrand
     try {
       this.logger.log(
         `Deleting supplier: ${supplierToDelete.name} (ID: ${id})`,

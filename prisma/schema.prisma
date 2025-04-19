@@ -414,6 +414,7 @@ enum UserRole {
   MANAGER // GERENTE
   CASHIER // CAJERO
   INVENTORY_MANAGER // INVENTARIO
+  REPORTS_VIEWER // Nuevo rol para solo ver reportes
 
   @@map("user_roles") // Optional mapping
 }

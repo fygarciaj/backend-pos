@@ -74,20 +74,20 @@ export class CustomersController {
     @Query('isActive') isActive?: string,
   ) {
     const where: Prisma.CustomerWhereInput = {};
-    if (isActive !== undefined) where.isActive = isActive === 'true';
     if (search) {
       where.OR = [
-        { fullName: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } },
+        { fullName: { contains: search.toLowerCase() } },
+        { email: { contains: search.toLowerCase() } },
+        { phoneNumber: { contains: search } },
       ];
     }
+    if (isActive !== undefined) where.isActive = isActive === 'true';
 
     return this.customersService.findAll({
-      skip,
-      take,
+      skip: skip ? parseInt(skip, 10) : undefined,
+      take: take ? parseInt(take, 10) : undefined,
       where,
-      // Podrías añadir orderBy desde query params
+      orderBy: { fullName: 'asc' },
     });
   }
 

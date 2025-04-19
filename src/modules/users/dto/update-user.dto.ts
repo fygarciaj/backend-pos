@@ -18,6 +18,14 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
       'Password too weak. Must contain uppercase, lowercase, number, and special character.',
   })
   password?: string;
+
+  @ApiProperty({
+    example: '2025-04-19T22:17:27.000Z',
+    description: 'Last login timestamp',
+    required: false,
+  })
+  @IsOptional()
+  lastLogin?: Date;
 }
 
 // Alternativa sin PartialType (más explícito):

@@ -3,7 +3,18 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "./node_modules/@prisma/client"
+  // output   = "./node_modules/@prisma/client"
+}
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+  output   = "./dbml/schema.dbml"
+}
+
+generator docs {
+  provider = "node node_modules/prisma-docs-generator"
+  output   = "../docs/prisma-docs"
+  language = "es"
 }
 
 datasource db {
@@ -263,14 +274,15 @@ model InventoryMovement {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  username     String   @unique
+  id           String    @id @default(cuid())
+  username     String    @unique
   passwordHash String // Store hashed password
   fullName     String
-  role         UserRole @default(CASHIER) // ADMIN, MANAGER, CASHIER, INVENTORY_MANAGER
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  role         UserRole  @default(CASHIER) // ADMIN, MANAGER, CASHIER, INVENTORY_MANAGER
+  isActive     Boolean   @default(true)
+  lastLogin    DateTime? // Add this field
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   salesMade          Sale[]              @relation("UserSales") // Explicit relation name needed if User is referenced multiple times in Sale/Return
   returnsProcessed   Return[]            @relation("UserReturns") // Explicit relation name
@@ -416,6 +428,8 @@ enum UserRole {
   CASHIER // CAJERO
   INVENTORY_MANAGER // INVENTARIO
   REPORTS_VIEWER // Nuevo rol para solo ver reportes
+  SALES_MANAGER // GESTION_VENTAS
+  GUEST
 
   @@map("user_roles") // Optional mapping
 }

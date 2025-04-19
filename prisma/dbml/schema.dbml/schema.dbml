@@ -1,0 +1,368 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table products {
+  id String [pk]
+  name String [not null]
+  description String
+  barcode String [unique]
+  currentStock Float [not null, default: 0]
+  minimumStock Float [default: 0]
+  maximumStock Float
+  categoryId String [not null]
+  brandId String
+  images Json
+  unitOfMeasure String [not null]
+  costPrice Float [not null]
+  sellingPrice Float [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  isActive Boolean [not null, default: true]
+  isFeatured Boolean [default: false]
+  tags String
+  isPromotionActive Boolean [default: false]
+  promotionId String
+  weight Float
+  dimensions String
+  sku String [unique]
+  variants Json
+  category categories [not null]
+  brand brands
+  saleDetails sale_details [not null]
+  inventoryHistory inventory_movements [not null]
+  purchaseOrderItems purchase_order_items [not null]
+  relatedProductsSource product_relations [not null]
+  relatedProductsTarget product_relations [not null]
+  locations product_locations [not null]
+}
+
+Table categories {
+  id String [pk]
+  name String [unique, not null]
+  description String
+  imageUrl String
+  slug String [unique]
+  parentId String
+  displayOrder Int
+  isActive Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  metaTitle String
+  metaDescription String
+  keywords String
+  products products [not null]
+  parentCategory categories
+  subcategories categories [not null]
+}
+
+Table brands {
+  id String [pk]
+  name String [unique, not null]
+  slug String [unique]
+  shortDescription String
+  logoUrl String
+  websiteUrl String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  isActive Boolean [not null, default: true]
+  internalNotes String
+  displayOrder Int
+  metaTitle String
+  metaDescription String
+  products products [not null]
+  suppliers supplier_brands [not null]
+  substituteBrands brand_relations [not null]
+  substitutedByBrands brand_relations [not null]
+}
+
+Table sales {
+  id String [pk]
+  saleTimestamp DateTime [default: `now()`, not null]
+  customerId String
+  subtotal Float [not null]
+  taxDetails Json
+  totalAmount Float [not null]
+  paymentMethod String [not null]
+  status SaleStatus [not null, default: 'COMPLETED']
+  userId String [not null]
+  invoiceNumber String [unique]
+  discountAmount Float [default: 0]
+  notes String
+  customer customers
+  user users [not null]
+  saleDetails sale_details [not null]
+  returns returns [not null]
+}
+
+Table sale_details {
+  id String [pk]
+  saleId String [not null]
+  productId String [not null]
+  quantity Float [not null]
+  unitPrice Float [not null]
+  itemDiscountAmount Float [default: 0]
+  itemTaxDetails Json
+  itemSubtotal Float [not null]
+  itemTotal Float [not null]
+  sale sales [not null]
+  product products [not null]
+}
+
+Table returns {
+  id String [pk]
+  originalSaleId String [not null]
+  returnTimestamp DateTime [default: `now()`, not null]
+  returnedItems Json [not null]
+  reason String
+  refundedAmount Float [not null]
+  processedByUserId String [not null]
+  originalSale sales [not null]
+  processedByUser users [not null]
+}
+
+Table customers {
+  id String [pk]
+  fullName String [not null]
+  phoneNumber String
+  email String [unique]
+  address String
+  customerType String
+  loyaltyPoints Int [default: 0]
+  accountBalance Float [default: 0]
+  registrationDate DateTime [default: `now()`, not null]
+  isActive Boolean [not null, default: true]
+  sales sales [not null]
+}
+
+Table suppliers {
+  id String [pk]
+  name String [unique, not null]
+  phoneNumber String
+  email String [unique]
+  address String
+  contactPerson String
+  paymentTerms String
+  createdAt DateTime [default: `now()`, not null]
+  isActive Boolean [not null, default: true]
+  purchaseOrders purchase_orders [not null]
+  brands supplier_brands [not null]
+}
+
+Table purchase_orders {
+  id String [pk]
+  supplierId String [not null]
+  orderDate DateTime [default: `now()`, not null]
+  status PurchaseOrderStatus [not null, default: 'PENDING']
+  receivedDate DateTime
+  totalAmount Float
+  supplier suppliers [not null]
+  items purchase_order_items [not null]
+  inventoryMovements inventory_movements [not null]
+}
+
+Table purchase_order_items {
+  id String [pk]
+  purchaseOrderId String [not null]
+  productId String [not null]
+  quantityOrdered Float [not null]
+  quantityReceived Float [default: 0]
+  unitCostPrice Float [not null]
+  purchaseOrder purchase_orders [not null]
+  product products [not null]
+}
+
+Table inventory_movements {
+  id String [pk]
+  productId String [not null]
+  timestamp DateTime [default: `now()`, not null]
+  movementType MovementType [not null]
+  quantity Float [not null]
+  adjustmentReason String
+  userId String [not null]
+  saleId String
+  purchaseOrderId String
+  returnId String
+  product products [not null]
+  user users [not null]
+  purchaseOrder purchase_orders
+}
+
+Table users {
+  id String [pk]
+  username String [unique, not null]
+  passwordHash String [not null]
+  fullName String [not null]
+  role UserRole [not null, default: 'CASHIER']
+  isActive Boolean [not null, default: true]
+  lastLogin DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  salesMade sales [not null]
+  returnsProcessed returns [not null]
+  inventoryMovements inventory_movements [not null]
+  activityLogs activity_logs [not null]
+}
+
+Table activity_logs {
+  id String [pk]
+  timestamp DateTime [default: `now()`, not null]
+  userId String [not null]
+  action String [not null]
+  details Json
+  user users [not null]
+}
+
+Table store_config {
+  id String [pk, default: 'main']
+  storeName String [not null]
+  address String
+  taxInfo String
+  taxConfig Json
+  activePaymentMethods Json
+  discountConfig Json
+  unitsOfMeasure Json
+  logoUrl String
+  currencyCode String [not null, default: 'MXN']
+}
+
+Table supplier_brands {
+  supplierId String [not null]
+  brandId String [not null]
+  supplier suppliers [not null]
+  brand brands [not null]
+
+  indexes {
+    (supplierId, brandId) [pk]
+  }
+}
+
+Table brand_relations {
+  sourceBrandId String [not null]
+  targetBrandId String [not null]
+  sourceBrand brands [not null]
+  targetBrand brands [not null]
+
+  indexes {
+    (sourceBrandId, targetBrandId) [pk]
+  }
+}
+
+Table product_relations {
+  sourceProductId String [not null]
+  targetProductId String [not null]
+  relationType String
+  sourceProduct products [not null]
+  targetProduct products [not null]
+
+  indexes {
+    (sourceProductId, targetProductId) [pk]
+  }
+}
+
+Table locations {
+  id String [pk]
+  name String [unique, not null]
+  type String [not null]
+  description String
+  capacity Float
+  coordinates String
+  isActive Boolean [not null, default: true]
+  productsAtLocation product_locations [not null]
+}
+
+Table product_locations {
+  productId String [not null]
+  locationId String [not null]
+  quantityAtLocation Float [not null, default: 0]
+  product products [not null]
+  location locations [not null]
+
+  indexes {
+    (productId, locationId) [pk]
+  }
+}
+
+Enum SaleStatus {
+  PENDING
+  COMPLETED
+  VOIDED
+}
+
+Enum PurchaseOrderStatus {
+  PENDING
+  SHIPPED
+  PARTIALLY_RECEIVED
+  FULLY_RECEIVED
+  CANCELLED
+}
+
+Enum MovementType {
+  PURCHASE_ENTRY
+  SALE_EXIT
+  POSITIVE_ADJUSTMENT
+  NEGATIVE_ADJUSTMENT
+  CUSTOMER_RETURN
+  SUPPLIER_RETURN
+  TRANSFER_OUT
+  TRANSFER_IN
+  INITIAL_STOCK
+}
+
+Enum UserRole {
+  ADMIN
+  MANAGER
+  CASHIER
+  INVENTORY_MANAGER
+  REPORTS_VIEWER
+  SALES_MANAGER
+  GUEST
+}
+
+Ref: products.categoryId > categories.id
+
+Ref: products.brandId > brands.id
+
+Ref: categories.parentId - categories.id [delete: No Action]
+
+Ref: sales.customerId > customers.id
+
+Ref: sales.userId > users.id
+
+Ref: sale_details.saleId > sales.id [delete: Cascade]
+
+Ref: sale_details.productId > products.id
+
+Ref: returns.originalSaleId > sales.id
+
+Ref: returns.processedByUserId > users.id
+
+Ref: purchase_orders.supplierId > suppliers.id
+
+Ref: purchase_order_items.purchaseOrderId > purchase_orders.id [delete: Cascade]
+
+Ref: purchase_order_items.productId > products.id
+
+Ref: inventory_movements.productId > products.id
+
+Ref: inventory_movements.userId > users.id
+
+Ref: inventory_movements.purchaseOrderId > purchase_orders.id
+
+Ref: activity_logs.userId > users.id
+
+Ref: supplier_brands.supplierId > suppliers.id
+
+Ref: supplier_brands.brandId > brands.id
+
+Ref: brand_relations.sourceBrandId > brands.id
+
+Ref: brand_relations.targetBrandId > brands.id
+
+Ref: product_relations.sourceProductId > products.id
+
+Ref: product_relations.targetProductId > products.id
+
+Ref: product_locations.productId > products.id
+
+Ref: product_locations.locationId > locations.id

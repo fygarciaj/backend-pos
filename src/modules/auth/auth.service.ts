@@ -25,7 +25,7 @@ export class AuthService {
   async validateUser(
     username: string,
     pass: string,
-  ): Promise<Omit<User, 'password'> | null> {
+  ): Promise<Omit<User, 'passwordHash'> | null> {
     this.logger.debug(`Attempting to validate user: ${username}`);
     const user = await this.usersService.findByUsername(username); // Busca usuario por username
 
@@ -41,7 +41,7 @@ export class AuthService {
 
     const isPasswordMatching = await bcrypt.compare(pass, user.passwordHash); // Compara hash
 
-    if (user && isPasswordMatching) {
+    if (isPasswordMatching) {
       this.logger.log(`User validation successful: ${username}`);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { passwordHash, ...result } = user; // Excluir contraseña del objeto retornado
@@ -58,7 +58,7 @@ export class AuthService {
    * @param user - El objeto de usuario validado (sin contraseña).
    * @returns Un objeto con el access_token.
    */
-  async login(user: Omit<User, 'password'>): Promise<LoginResponse> {
+  async login(user: Omit<User, 'passwordHash'>): Promise<LoginResponse> {
     this.logger.log(
       `Generating JWT for user: ${user.username} (ID: ${user.id})`,
     );

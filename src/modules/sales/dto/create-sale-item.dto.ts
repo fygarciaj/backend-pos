@@ -1,5 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsPositive, IsUUID, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 export class CreateSaleItemDto {
   @ApiProperty({
@@ -15,10 +23,34 @@ export class CreateSaleItemDto {
     example: 2,
   })
   @IsInt()
-  @IsPositive() // Debe ser al menos 1
+  @IsPositive()
   @Min(1)
   quantity: number;
 
-  // El precio unitario se tomará del producto en el momento de la venta en el servicio.
-  // Los descuentos/impuestos por ítem se pueden añadir aquí más adelante si es necesario.
+  @ApiPropertyOptional({
+    description: 'Tax rate percentage for this item',
+    example: 18,
+  })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  taxRate?: number;
+
+  @ApiPropertyOptional({
+    description: 'Unit price for this item (if different from product price)',
+    example: 10.99,
+  })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  unitPrice?: number;
+
+  @ApiPropertyOptional({
+    description: 'Discount amount for this item',
+    example: 5,
+  })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  itemDiscountAmount?: number;
 }

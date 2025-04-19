@@ -63,8 +63,6 @@ export class UsersService {
     ) {
       where.role = filters.role as UserRole;
     }
-    // Añadir más filtros aquí si es necesario (e.g., isActive)
-    // where.isActive = true;
 
     try {
       const [users, count] = await this.prisma.$transaction([
@@ -73,24 +71,23 @@ export class UsersService {
           take: limit,
           where,
           select: {
-            // Seleccionar explícitamente para excluir passwordHash
             id: true,
             username: true,
             fullName: true,
             role: true,
             isActive: true,
+            lastLogin: true,
             createdAt: true,
             updatedAt: true,
           },
           orderBy: {
-            createdAt: 'desc', // O por username, etc.
+            createdAt: 'desc',
           },
         }),
         this.prisma.user.count({ where }),
       ]);
       return { data: users, count };
     } catch (error) {
-      // Log error
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(
@@ -103,12 +100,12 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: {
-        // Excluir hash
         id: true,
         username: true,
         fullName: true,
         role: true,
         isActive: true,
+        lastLogin: true,
         createdAt: true,
         updatedAt: true,
       },

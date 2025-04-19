@@ -73,7 +73,7 @@ export class BrandsController {
     @Query('includeProductsCount') includeProductsCount?: string,
   ) {
     const where: Prisma.BrandWhereInput = {};
-    if (name) where.name = { contains: name, mode: 'insensitive' };
+    if (name) where.name = { contains: name.toLowerCase() }; // MySQL will use case-insensitive comparison by default
     if (isActive !== undefined) where.isActive = isActive === 'true';
 
     return this.brandsService.findAll({

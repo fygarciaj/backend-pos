@@ -1,38 +1,29 @@
+import { IsString, IsNumber, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import {
-  IsInt,
-  IsNotEmpty,
-  IsPositive,
-  IsUUID,
-  Min,
-  IsDecimal,
-} from 'class-validator';
 
 export class CreatePurchaseOrderItemDto {
   @ApiProperty({
-    description: 'UUID of the product being ordered',
-    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+    description: 'Product ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsUUID()
-  @IsNotEmpty()
+  @IsString()
   productId: string;
 
   @ApiProperty({
-    description: 'Quantity of the product being ordered',
+    description: 'Quantity ordered',
     example: 10,
+    minimum: 1,
   })
-  @IsInt()
-  @IsPositive()
+  @IsNumber()
   @Min(1)
   quantityOrdered: number;
 
   @ApiProperty({
-    description: 'Purchase price per unit for this item',
-    example: '25.50',
+    description: 'Unit cost price',
+    example: 19.99,
+    minimum: 0,
   })
-  @IsDecimal({ decimal_digits: '2' }) // Validar como string para precisión
-  @IsPositive()
-  @Type(() => String)
-  purchasePrice: string; // Precio de compra unitario
+  @IsNumber()
+  @Min(0)
+  unitCostPrice: number;
 }

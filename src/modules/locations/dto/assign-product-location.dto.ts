@@ -1,24 +1,25 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsUUID, Min } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNumber, IsOptional } from 'class-validator';
 
 export class AssignProductLocationDto {
-  @ApiProperty({ description: 'UUID of the Product' })
-  @IsUUID()
-  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Product ID to assign to location',
+  })
+  @IsString()
   productId: string;
 
-  @ApiProperty({ description: 'UUID of the Location' })
-  @IsUUID()
-  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Location ID where to assign the product',
+  })
+  @IsString()
   locationId: string;
 
-  @ApiPropertyOptional({
-    description:
-      'Quantity of the product at this specific location (required if using ProductLocation table)',
-    example: 10,
+  @ApiProperty({
+    description: 'Quantity at this location',
+    required: false,
+    default: 0,
   })
-  @IsInt()
-  @Min(0) // Puede ser 0 si se quiere registrar la ubicación sin stock inicial
-  @IsNotEmpty() // Requerido si usamos la tabla intermedia ProductLocation
-  quantityInLocation?: number = 0;
+  @IsOptional()
+  @IsNumber()
+  quantityAtLocation?: number;
 }

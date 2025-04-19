@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, ApiProperty, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsDateString,
@@ -10,70 +10,73 @@ import {
   ValidateNested,
   IsInt,
   Min,
+  IsNotEmpty,
+  IsNumber,
 } from 'class-validator';
 import { PurchaseOrderStatus } from '@prisma/client';
+import { CreatePurchaseOrderDto } from './create-purchase-order.dto';
 
 // DTO para actualizar la cantidad recibida de un ítem específico
 export class ReceivePurchaseOrderItemDto {
-  @ApiPropertyOptional({
-    description:
-      'UUID of the PurchaseOrderItem being received (optional, can use productId)',
+  @ApiProperty({
+    description: 'ID of the specific purchase order item',
+    required: false,
   })
-  @IsUUID()
   @IsOptional()
-  purchaseOrderItemId?: string; // ID del detalle de la orden
+  @IsString()
+  purchaseOrderItemId?: string;
 
-  @ApiPropertyOptional({
-    description:
-      'UUID of the Product being received (alternative to purchaseOrderItemId)',
+  @ApiProperty({
+    description: 'ID of the product being received',
+    required: false,
   })
-  @IsUUID()
   @IsOptional()
-  productId?: string; // ID del producto (alternativa)
+  @IsString()
+  productId?: string;
 
-  @ApiPropertyOptional({
-    description: 'Quantity received in this update',
+  @ApiProperty({
+    description: 'Quantity being received in this update',
     example: 5,
   })
-  @IsInt()
-  @Min(0) // Puede ser 0 si no se recibió nada de este ítem en esta recepción
   @IsNotEmpty()
+  @IsNumber()
   quantityReceivedNow: number;
 }
 
-export class UpdatePurchaseOrderDto {
-  @ApiPropertyOptional({
-    description: 'New status for the purchase order',
+export class UpdatePurchaseOrderDto extends PartialType(CreatePurchaseOrderDto) {
+  @ApiProperty({
     enum: PurchaseOrderStatus,
+    description: 'New status for the purchase order',
+    required: false,
   })
-  @IsEnum(PurchaseOrderStatus)
   @IsOptional()
+  @IsEnum(PurchaseOrderStatus)
   status?: PurchaseOrderStatus;
 
-  @ApiPropertyOptional({ description: 'Date the order was actually received' })
-  @IsDateString()
+  @ApiProperty({
+    description: 'Expected delivery date',
+    required: false,
+  })
   @IsOptional()
-  receivedDate?: string;
-
-  @ApiPropertyOptional({ description: 'Updated expected delivery date' })
-  @IsDateString()
-  @IsOptional()
+  @IsString()
   expectedDate?: string;
 
-  @ApiPropertyOptional({ description: 'Updated notes or comments' })
-  @IsString()
-  @IsOptional()
-  notes?: string;
-
-  // Para marcar ítems como recibidos (parcial o totalmente)
-  @ApiPropertyOptional({
-    description:
-      'List of items received in this update (used when status changes to PARTIALLY_RECEIVED or RECEIVED)',
-    type: [ReceivePurchaseOrderItemDto],
+  @ApiProperty({
+    description: 'Date when items were received',
+    required: false,
   })
+  @IsOptional()
+  @IsString()
+  receivedDate?: string;
+
+  @ApiProperty({
+    type: [ReceivePurchaseOrderItemDto],
+    description: 'Items being received in this update',
+    required: false,
+  })
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ReceivePurchaseOrderItemDto)
-  @IsOptional()
   itemsReceived?: ReceivePurchaseOrderItemDto[];
 }

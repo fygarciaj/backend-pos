@@ -20,7 +20,7 @@ export class CustomersService {
   async create(createCustomerDto: CreateCustomerDto): Promise<Customer> {
     const { email, accountBalance, ...customerData } = createCustomerDto;
 
-    // Verificar email único si se proporciona
+    // Check unique email if provided
     if (email) {
       const existingEmail = await this.prisma.customer.findUnique({
         where: { email },
@@ -35,9 +35,7 @@ export class CustomersService {
     const data: Prisma.CustomerCreateInput = {
       ...customerData,
       email,
-      accountBalance: accountBalance
-        ? new Decimal(accountBalance)
-        : new Decimal('0.00'),
+      accountBalance: accountBalance ? Number(accountBalance) : 0,
     };
 
     try {
@@ -63,31 +61,39 @@ export class CustomersService {
       where,
       orderBy: orderBy ?? { fullName: 'asc' },
       include: {
-        _count: { select: { sales: true } }, // Incluir contador de ventas
+        _count: {
+          select: { sales: true },
+        },
       },
     });
   }
 
-  async findOne(
-    id: string,
-    includeSales: boolean = false,
-  ): Promise<Customer | null> {
+  async findOne(id: string, includeSales = false): Promise<Customer> {
     const customer = await this.prisma.customer.findUnique({
       where: { id },
       include: {
         sales: includeSales
           ? {
-              take: 10, // Limitar número de ventas incluidas
-              orderBy: { createdAt: 'desc' },
-              select: { id: true, saleDate: true, total: true, status: true }, // Seleccionar campos clave de la venta
+              take: 10,
+              orderBy: { saleTimestamp: 'desc' },
+              select: {
+                id: true,
+                saleTimestamp: true,
+                totalAmount: true,
+                status: true,
+              },
             }
           : false,
-        _count: { select: { sales: true } },
+        _count: {
+          select: { sales: true },
+        },
       },
     });
+
     if (!customer) {
       throw new NotFoundException(`Customer with ID "${id}" not found`);
     }
+
     return customer;
   }
 
@@ -134,31 +140,30 @@ export class CustomersService {
   }
 
   async remove(id: string): Promise<Customer> {
-    // Verificar si existe
-    const customerToDelete = await this.findOne(id, true); // Incluir relaciones para verificar
+    const customerToDelete = await this.prisma.customer.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { sales: true },
+        },
+      },
+    });
 
-    // Verificar si tiene ventas asociadas
-    // En lugar de impedir borrar, podríamos anonimizar o marcar como inactivo.
-    // Por ahora, impedimos si tiene ventas.
-    if (
-      customerToDelete &&
-      customerToDelete._count &&
-      customerToDelete._count.sales > 0
-    ) {
+    if (!customerToDelete) {
+      throw new NotFoundException(`Customer with ID "${id}" not found`);
+    }
+
+    if (customerToDelete._count.sales > 0) {
       throw new ConflictException(
         `Cannot delete customer "${customerToDelete.fullName}" because they have ${customerToDelete._count.sales} associated sales. Consider deactivating the customer instead.`,
       );
-      // Alternativa: Marcar como inactivo
-      // return this.update(id, { isActive: false });
     }
 
     try {
       this.logger.log(
         `Deleting customer: ${customerToDelete.fullName} (ID: ${id})`,
       );
-      return await this.prisma.customer.delete({
-        where: { id },
-      });
+      return await this.prisma.customer.delete({ where: { id } });
     } catch (error) {
       this.handleDbError(error);
     }

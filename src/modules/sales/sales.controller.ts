@@ -26,7 +26,7 @@ import {
 } from '@nestjs/swagger';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole, Prisma } from '@prisma/client';
+import { UserRole, Prisma, SaleStatus } from '@prisma/client';
 // JwtAuthGuard es global
 
 @ApiTags('Sales')
@@ -114,7 +114,7 @@ export class SalesController {
     const where: Prisma.SaleWhereInput = {};
     if (customerId) where.customerId = customerId;
     if (userId) where.userId = userId;
-    if (status) where.status = status;
+    if (status) where.status = status as SaleStatus;
     if (startDate || endDate) {
       where.saleTimestamp = {};
       if (startDate) where.saleTimestamp.gte = new Date(startDate);

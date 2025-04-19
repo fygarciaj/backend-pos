@@ -20,6 +20,30 @@ export class ReturnsService {
     private readonly productsService: ProductsService,
   ) {}
 
+  private async processReturnedItems(
+    tx: Omit<
+      PrismaService,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+    >,
+    returnedItems: Array<{ productId: string; quantity: number }>,
+    userId: string,
+    returnId: string,
+  ) {
+    for (const item of returnedItems) {
+      await this.productsService.updateStock(
+        item.productId,
+        item.quantity,
+        MovementType.CUSTOMER_RETURN,
+        userId,
+        `Return ID: ${returnId}`,
+        undefined,
+        undefined,
+        returnId,
+        tx,
+      );
+    }
+  }
+
   async create(
     createReturnDto: CreateReturnDto,
     processedByUserId: string,
@@ -55,10 +79,6 @@ export class ReturnsService {
           productId: item.productId,
           quantity: item.quantity,
         }));
-        const productStockUpdates: {
-          productId: string;
-          quantityChange: number;
-        }[] = [];
         const amountRefundedNumber = Number(amountRefunded ?? '0.00');
 
         // 2. Validar y Procesar cada Ítem Devuelto
@@ -88,12 +108,6 @@ export class ReturnsService {
               `Cannot return ${item.quantity} of product "${product.name}" (ID: ${item.productId}). Only ${originalSaleDetail.quantity} were sold in the original sale ${originalSaleId}.`,
             );
           }
-
-          // 2d. Preparar actualización de stock (positivo para entrada por devolución)
-          productStockUpdates.push({
-            productId: item.productId,
-            quantityChange: item.quantity, // Positivo porque es una entrada
-          });
         } // Fin del bucle de items
 
         // 3. Crear el registro de Devolución (Return)
@@ -111,22 +125,12 @@ export class ReturnsService {
         );
 
         // 4. Actualizar Stock de Productos y crear movimientos de inventario
-        for (const update of productStockUpdates) {
-          this.logger.debug(
-            `Updating stock for returned product ${update.productId}: +${update.quantityChange}`,
-          );
-          await this.productsService.updateStock(
-            update.productId,
-            update.quantityChange, // Cantidad positiva
-            'CUSTOMER_RETURN', // Tipo de movimiento
-            processedByUserId,
-            `Return against Sale ${originalSaleId} (Return ID: ${createdReturn.id})`, // reason
-            originalSaleId, // relatedSaleId (opcional, para trazabilidad)
-            undefined, // relatedPurchaseOrderId
-            createdReturn.id, // relatedReturnId
-            tx, // Pasar cliente de transacción
-          );
-        }
+        await this.processReturnedItems(
+          tx,
+          returnedItems,
+          processedByUserId,
+          createdReturn.id,
+        );
         this.logger.log(`Stock updated for return ${createdReturn.id}.`);
 
         // 5. Opcional: Actualizar estado de la Venta Original

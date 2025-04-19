@@ -221,4 +221,36 @@ export class InventoryService {
       );
     }
   }
+
+  /**
+   * Retrieves all inventory movements based on filter criteria.
+   * @param params - Filtering and pagination parameters.
+   * @returns A list of inventory movements.
+   */
+  async findAll(params: {
+    skip?: number;
+    take?: number;
+    cursor?: Prisma.InventoryMovementWhereUniqueInput;
+    where?: Prisma.InventoryMovementWhereInput;
+    orderBy?: Prisma.InventoryMovementOrderByWithRelationInput;
+  }): Promise<InventoryMovement[]> {
+    const { skip, take, cursor, where, orderBy } = params;
+    return this.prisma.inventoryMovement.findMany({
+      skip,
+      take,
+      cursor,
+      where,
+      orderBy: orderBy ?? { timestamp: 'desc' },
+      include: {
+        product: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+          },
+        },
+      },
+    });
+  }
 }

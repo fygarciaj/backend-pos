@@ -1,59 +1,33 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { InventoryMovementType } from '@prisma/client';
-import {
-  IsInt,
-  IsNotEmpty,
-  IsUUID,
-  IsEnum,
-  IsString,
-  MaxLength,
-  IsOptional,
-  ValidateIf,
-  NotEquals,
-} from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { MovementType } from '@prisma/client';
 
 export class AdjustInventoryDto {
-  @ApiProperty({
-    description: 'UUID of the product to adjust',
-    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-  })
-  @IsUUID()
-  @IsNotEmpty()
+  @ApiProperty({ example: 'product-uuid', description: 'Product ID' })
+  @IsString()
   productId: string;
 
   @ApiProperty({
-    description: 'Type of adjustment movement',
-    enum: [
-      InventoryMovementType.ADJUSTMENT_IN,
-      InventoryMovementType.ADJUSTMENT_OUT,
-    ], // Solo permitir tipos de ajuste manual
-    example: InventoryMovementType.ADJUSTMENT_OUT,
+    enum: MovementType,
+    example: MovementType.POSITIVE_ADJUSTMENT,
+    description: 'Type of inventory movement',
   })
-  @IsEnum([
-    InventoryMovementType.ADJUSTMENT_IN,
-    InventoryMovementType.ADJUSTMENT_OUT,
-  ])
-  @IsNotEmpty()
-  type:
-    | InventoryMovementType.ADJUSTMENT_IN
-    | InventoryMovementType.ADJUSTMENT_OUT;
+  @IsEnum(MovementType)
+  movementType: MovementType;
 
   @ApiProperty({
-    description:
-      'Quantity to adjust (positive number). The sign is determined by the movement type.',
     example: 5,
+    description: 'Quantity to adjust (positive or negative)',
   })
-  @IsInt()
-  @IsNotEmpty()
-  @NotEquals(0) // La cantidad no puede ser cero
-  quantity: number; // Siempre positivo en el DTO, el servicio aplicará el signo
+  @IsNumber()
+  quantity: number;
 
-  @ApiPropertyOptional({
-    description: 'Reason for the adjustment (required for adjustments)',
-    example: 'Stock count correction',
+  @ApiProperty({
+    example: 'Stock count adjustment',
+    description: 'Reason for adjustment',
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty() // Razón es obligatoria para ajustes manuales
-  @MaxLength(255)
-  reason: string;
+  adjustmentReason?: string;
 }

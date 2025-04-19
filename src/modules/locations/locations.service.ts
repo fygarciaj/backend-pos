@@ -4,14 +4,20 @@ import {
   NotFoundException,
   ConflictException,
   InternalServerErrorException,
-  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { AssignProductLocationDto } from './dto/assign-product-location.dto';
 import { UpdateProductLocationQuantityDto } from './dto/update-product-location-quantity.dto';
-import { Prisma, Location, ProductLocation, Product } from '@prisma/client';
+import { Prisma, Location, ProductLocation } from '@prisma/client';
+
+interface DbError {
+  code?: string;
+  message?: string;
+  stack?: string;
+  meta?: { target?: string[] };
+}
 
 @Injectable()
 export class LocationsService {
@@ -22,7 +28,11 @@ export class LocationsService {
   // --- Location CRUD ---
 
   async create(createLocationDto: CreateLocationDto): Promise<Location> {
-    const { name, ...locationData } = createLocationDto;
+    const { name } = createLocationDto;
+
+    if (!name) {
+      throw new ConflictException('Name is required');
+    }
 
     const existingName = await this.prisma.location.findUnique({
       where: { name },
@@ -37,7 +47,7 @@ export class LocationsService {
       this.logger.log(`Creating location: ${name}`);
       return await this.prisma.location.create({ data: createLocationDto });
     } catch (error) {
-      this.handleDbError(error, { name });
+      this.handleDbError(error as DbError, { name });
     }
   }
 
@@ -56,7 +66,7 @@ export class LocationsService {
       where,
       orderBy: orderBy ?? { name: 'asc' },
       include: {
-        _count: { select: { products: true, productLocations: true } }, // Contar productos asociados
+        _count: { select: { productsAtLocation: true } },
       },
     });
   }
@@ -65,19 +75,28 @@ export class LocationsService {
     const location = await this.prisma.location.findUnique({
       where: { id },
       include: {
-        // Incluir productos cuya ubicación principal es esta
-        products: { take: 10, select: { id: true, name: true, sku: true } },
-        // Incluir productos específicos en esta ubicación (si se usa ProductLocation)
-        productLocations: {
-          take: 10,
-          include: { product: { select: { id: true, name: true, sku: true } } },
+        productsAtLocation: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                currentStock: true,
+              },
+            },
+          },
         },
-        _count: true,
+        _count: {
+          select: { productsAtLocation: true },
+        },
       },
     });
+
     if (!location) {
       throw new NotFoundException(`Location with ID "${id}" not found`);
     }
+
     return location;
   }
 
@@ -100,6 +119,15 @@ export class LocationsService {
         );
       }
       dataToUpdate.name = name;
+      try {
+        this.logger.log(`Updating location ID: ${id}`);
+        return await this.prisma.location.update({
+          where: { id },
+          data: dataToUpdate,
+        });
+      } catch (error) {
+        this.handleDbError(error as DbError, { name });
+      }
     }
 
     try {
@@ -109,20 +137,27 @@ export class LocationsService {
         data: dataToUpdate,
       });
     } catch (error) {
-      this.handleDbError(error, { name });
+      this.handleDbError(error as DbError);
     }
   }
 
   async remove(id: string): Promise<Location> {
-    const locationToDelete = await this.findOne(id); // Check existence and relations
+    const locationToDelete = await this.prisma.location.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { productsAtLocation: true },
+        },
+      },
+    });
 
-    // Verificar si hay productos asignados (como ubicación principal o en ProductLocation)
-    if (
-      locationToDelete._count.products > 0 ||
-      locationToDelete._count.productLocations > 0
-    ) {
+    if (!locationToDelete) {
+      throw new NotFoundException(`Location with ID "${id}" not found`);
+    }
+
+    if (locationToDelete._count.productsAtLocation > 0) {
       throw new ConflictException(
-        `Cannot delete location "${locationToDelete.name}" because it has associated products. Please reassign them first.`,
+        `Cannot delete location "${locationToDelete.name}" because it has products assigned to it. Please reassign them first.`,
       );
     }
 
@@ -132,62 +167,49 @@ export class LocationsService {
       );
       return await this.prisma.location.delete({ where: { id } });
     } catch (error) {
-      this.handleDbError(error);
+      this.handleDbError(error as DbError);
     }
   }
 
   // --- ProductLocation Management (si se usa la tabla intermedia) ---
 
-  async assignProductToLocation(
+  async assignProduct(
     assignDto: AssignProductLocationDto,
-  ): Promise<ProductLocation | Product> {
-    const { productId, locationId, quantityAtLocation } = assignDto;
+  ): Promise<ProductLocation> {
+    const { productId, locationId, quantityAtLocation = 0 } = assignDto;
 
-    // Validar que producto y ubicación existen
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-    });
-    const location = await this.prisma.location.findUnique({
-      where: { id: locationId },
-    });
-    if (!product)
-      throw new NotFoundException(`Product with ID "${productId}" not found.`);
-    if (!location)
-      throw new NotFoundException(
-        `Location with ID "${locationId}" not found.`,
-      );
+    // Verify product and location exist
+    const [product, location] = await Promise.all([
+      this.prisma.product.findUnique({ where: { id: productId } }),
+      this.prisma.location.findUnique({ where: { id: locationId } }),
+    ]);
 
-    // --- Opción 1: Usar la tabla intermedia ProductLocation ---
-    if (quantityAtLocation !== undefined) {
-      this.logger.log(
-        `Assigning/Updating Product ${productId} to Location ${locationId} with quantity ${quantityAtLocation}`,
-      );
-      try {
-        // Usar upsert para crear o actualizar la entrada en ProductLocation
-        return await this.prisma.productLocation.upsert({
-          where: { productId_locationId: { productId, locationId } },
-          update: { quantityAtLocation },
-          create: { productId, locationId, quantityAtLocation },
-          include: { product: true, location: true }, // Incluir relaciones en la respuesta
-        });
-      } catch (error) {
-        this.handleDbError(error);
-      }
+    if (!product) {
+      throw new NotFoundException(`Product with ID "${productId}" not found`);
     }
-    // --- Opción 2: Usar el campo locationId en Product (ubicación principal) ---
-    else {
-      this.logger.log(
-        `Setting Location ${locationId} as primary for Product ${productId}`,
-      );
-      try {
-        return await this.prisma.product.update({
-          where: { id: productId },
-          data: { locationId: locationId },
-          include: { location: true }, // Incluir la ubicación en la respuesta
-        });
-      } catch (error) {
-        this.handleDbError(error);
-      }
+    if (!location) {
+      throw new NotFoundException(`Location with ID "${locationId}" not found`);
+    }
+
+    try {
+      return await this.prisma.productLocation.upsert({
+        where: {
+          productId_locationId: {
+            productId,
+            locationId,
+          },
+        },
+        update: {
+          quantityAtLocation,
+        },
+        create: {
+          productId,
+          locationId,
+          quantityAtLocation,
+        },
+      });
+    } catch (error) {
+      this.handleDbError(error as DbError);
     }
   }
 
@@ -197,27 +219,28 @@ export class LocationsService {
     updateDto: UpdateProductLocationQuantityDto,
   ): Promise<ProductLocation> {
     const { quantityAtLocation } = updateDto;
-    this.logger.log(
-      `Updating quantity for Product ${productId} in Location ${locationId} to ${quantityAtLocation}`,
-    );
 
     try {
-      // Usar update con manejo de error si no existe la combinación
       return await this.prisma.productLocation.update({
-        where: { productId_locationId: { productId, locationId } },
+        where: {
+          productId_locationId: {
+            productId,
+            locationId,
+          },
+        },
         data: { quantityAtLocation },
-        include: { product: true, location: true },
+        include: {
+          product: true,
+          location: true,
+        },
       });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
+      if ((error as DbError).code === 'P2025') {
         throw new NotFoundException(
           `Product ${productId} is not assigned to location ${locationId}. Use the assign endpoint first.`,
         );
       }
-      this.handleDbError(error);
+      this.handleDbError(error as DbError);
     }
   }
 
@@ -238,10 +261,7 @@ export class LocationsService {
         message: `Product ${productId} successfully removed from location ${locationId}`,
       };
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
+      if ((error as DbError).code === 'P2025') {
         // No lanzar error si ya no existe, simplemente informar
         this.logger.warn(
           `Product ${productId} was not assigned to location ${locationId}. No action taken.`,
@@ -250,7 +270,7 @@ export class LocationsService {
           message: `Product ${productId} was not assigned to location ${locationId}.`,
         };
       }
-      this.handleDbError(error);
+      this.handleDbError(error as DbError);
     }
 
     // --- Opción 2: Quitar ubicación principal de Product ---
@@ -270,82 +290,55 @@ export class LocationsService {
   }
 
   async getProductsInLocation(locationId: string): Promise<any[]> {
-    await this.findOne(locationId); // Validar que la ubicación existe
+    await this.findOne(locationId); // Validate location exists
     this.logger.debug(`Fetching products assigned to location ${locationId}`);
 
-    // Combina productos con ubicación principal y los de ProductLocation
-    const primaryLocationProducts = await this.prisma.product.findMany({
-      where: { locationId: locationId, isActive: true },
-      select: { id: true, name: true, sku: true, currentStock: true }, // currentStock es el total
-    });
-
-    const specificLocationProducts = await this.prisma.productLocation.findMany(
-      {
-        where: { locationId: locationId },
-        include: {
-          product: {
-            select: { id: true, name: true, sku: true, isActive: true },
+    const locationProducts = await this.prisma.productLocation.findMany({
+      where: { locationId: locationId },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            currentStock: true,
+            isActive: true,
           },
         },
       },
-    );
-
-    // Formatear y combinar resultados (evitando duplicados si un producto está en ambos)
-    const productMap = new Map();
-
-    primaryLocationProducts.forEach((p) => {
-      productMap.set(p.id, {
-        ...p,
-        quantityAtLocation: null,
-        source: 'primary',
-      });
     });
 
-    specificLocationProducts.forEach((pl) => {
-      if (pl.product.isActive) {
-        // Solo incluir si el producto está activo
-        const existing = productMap.get(pl.productId);
-        if (existing) {
-          existing.quantityAtLocation = pl.quantityAtLocation;
-          existing.source = 'both'; // O actualizar como prefieras
-        } else {
-          productMap.set(pl.productId, {
-            id: pl.productId,
-            name: pl.product.name,
-            sku: pl.product.sku,
-            quantityAtLocation: pl.quantityAtLocation,
-            source: 'specific',
-          });
-        }
-      }
-    });
-
-    return Array.from(productMap.values());
+    return locationProducts
+      .filter((pl) => pl.product.isActive)
+      .map((pl) => ({
+        id: pl.product.id,
+        name: pl.product.name,
+        sku: pl.product.sku,
+        currentStock: pl.product.currentStock,
+        quantityAtLocation: pl.quantityAtLocation,
+      }));
   }
 
   // Helper para manejar errores de base de datos
-  private handleDbError(error: any, context?: any): never {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') {
-        // Unique constraint violation
-        const fields = error.meta?.target as string[];
-        if (fields?.includes('name') && context?.name) {
-          throw new ConflictException(
-            `Location with name "${context.name}" already exists.`,
-          );
-        }
-        // Podría haber otros unique constraints (ej: productId_locationId en ProductLocation)
-        throw new ConflictException('Unique constraint violation.');
-      }
-      if (error.code === 'P2025') {
-        // Record not found
-        throw new NotFoundException(
-          'The required record (location, product, or assignment) was not found.',
+  private handleDbError(error: DbError, context?: { name: string }): never {
+    if (error.code === 'P2002') {
+      const fields = error.meta?.target;
+      if (fields?.includes('name') && context?.name) {
+        throw new ConflictException(
+          `Location with name "${context.name}" already exists.`,
         );
       }
-      // P2003 (Foreign key constraint) se maneja con las verificaciones previas
+      throw new ConflictException('Unique constraint violation.');
     }
-    this.logger.error(`Database Error: ${error.message}`, error.stack);
+    if (error.code === 'P2025') {
+      throw new NotFoundException(
+        'The required record (location, product, or assignment) was not found.',
+      );
+    }
+    this.logger.error(
+      `Database Error: ${error.message || 'Unknown error'}`,
+      error.stack || 'No stack trace available',
+    );
     throw new InternalServerErrorException(
       'An unexpected database error occurred.',
     );

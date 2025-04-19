@@ -11,8 +11,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import type { CreateCategoryDto } from './dto/create-category.dto';
+import type { UpdateCategoryDto } from './dto/update-category.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -21,10 +21,11 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { RolesGuard } from '../../auth/guards/roles.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { UserRole } from '@prisma/client';
-import { Public } from '../../auth/decorators/public.decorator'; // Para permitir acceso público a la lista/árbol
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
+import { UserRole, Prisma } from '@prisma/client';
+import type { CategoryTree } from './interfaces/category.interface';
 
 @ApiTags('Categories')
 @ApiBearerAuth() // La mayoría requiere auth, excepto las marcadas con @Public
@@ -80,7 +81,7 @@ export class CategoriesController {
     @Query('includeChildren') includeChildren?: string,
   ) {
     const where: Prisma.CategoryWhereInput = {};
-    if (name) where.name = { contains: name, mode: 'insensitive' };
+    if (name) where.name = { contains: name };
     if (isActive !== undefined) where.isActive = isActive === 'true';
 
     return this.categoriesService.findAll({
@@ -97,8 +98,8 @@ export class CategoriesController {
   @Get('tree')
   @ApiOperation({ summary: 'Get category tree structure (Public)' })
   @ApiResponse({ status: 200, description: 'Hierarchical list of categories.' })
-  getTree() {
-    return this.categoriesService.getCategoryTree();
+  async getTree(): Promise<CategoryTree[]> {
+    return await this.categoriesService.getCategoryTree();
   }
 
   @Public() // Permitir acceso público por slug

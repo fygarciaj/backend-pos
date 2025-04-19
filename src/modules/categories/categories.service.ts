@@ -4,26 +4,39 @@ import {
   ConflictException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { PrismaService } from '../../database/prisma.service'; // Ajusta ruta
+import { PrismaService } from '../../database/prisma.service';
+import { Prisma, Category } from '@prisma/client';
+import { slugify } from '../../common/utils/slugify';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { Prisma, Category } from '@prisma/client';
-import { slugify } from '../../common/utils/slugify'; // Necesitaremos una función para generar slugs
+import {
+  CategoryTree,
+  CategoryWithSubcategories,
+} from './interfaces/category.interface';
+
+interface DbErrorContext {
+  name?: string;
+  slug?: string;
+}
 
 @Injectable()
 export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
-    const { name, slug, parentCategoryId, ...categoryData } = createCategoryDto;
+    const {
+      name,
+      slug: slugInput,
+      parentId,
+      ...categoryData
+    } = createCategoryDto;
 
-    // Generar slug si no se proporciona
-    const finalSlug = slug ? slugify(slug) : slugify(name);
+    const finalSlug = slugInput ? slugify(slugInput) : slugify(name);
 
-    // Verificar si el nombre o slug ya existen
     const existingCategory = await this.prisma.category.findFirst({
       where: { OR: [{ name }, { slug: finalSlug }] },
     });
+
     if (existingCategory) {
       if (existingCategory.name === name) {
         throw new ConflictException(
@@ -37,29 +50,26 @@ export class CategoriesService {
       }
     }
 
-    // Verificar si la categoría padre existe (si se proporciona)
-    if (parentCategoryId) {
+    if (parentId) {
       const parentExists = await this.prisma.category.findUnique({
-        where: { id: parentCategoryId },
+        where: { id: parentId },
       });
       if (!parentExists) {
         throw new NotFoundException(
-          `Parent category with ID "${parentCategoryId}" not found.`,
+          `Parent category with ID "${parentId}" not found.`,
         );
       }
     }
 
-    const data: Prisma.CategoryCreateInput = {
-      ...categoryData,
-      name,
-      slug: finalSlug,
-      ...(parentCategoryId && {
-        parentCategory: { connect: { id: parentCategoryId } },
-      }),
-    };
-
     try {
-      return await this.prisma.category.create({ data });
+      return await this.prisma.category.create({
+        data: {
+          ...categoryData,
+          name,
+          slug: finalSlug,
+          ...(parentId && { parentId }),
+        },
+      });
     } catch (error) {
       this.handleDbError(error, { name, slug: finalSlug });
     }
@@ -71,8 +81,8 @@ export class CategoriesService {
     cursor?: Prisma.CategoryWhereUniqueInput;
     where?: Prisma.CategoryWhereInput;
     orderBy?: Prisma.CategoryOrderByWithRelationInput;
-    includeProductsCount?: boolean; // Opción para incluir conteo de productos
-    includeChildren?: boolean; // Opción para incluir subcategorías
+    includeProductsCount?: boolean;
+    includeChildren?: boolean;
   }): Promise<Category[]> {
     const {
       skip,
@@ -83,20 +93,20 @@ export class CategoriesService {
       includeProductsCount,
       includeChildren,
     } = params;
+
     return this.prisma.category.findMany({
       skip,
       take,
       cursor,
       where,
-      orderBy: orderBy ?? { order: 'asc', name: 'asc' }, // Orden por defecto
+      orderBy: orderBy ?? { name: 'asc' },
       include: {
         _count: includeProductsCount
-          ? { select: { products: true } }
+          ? {
+              select: { products: true },
+            }
           : undefined,
-        childCategories: includeChildren
-          ? { include: { _count: { select: { products: true } } } }
-          : false, // Incluir hijos si se solicita
-        parentCategory: true, // Incluir padre para contexto
+        subcategories: includeChildren,
       },
     });
   }
@@ -105,15 +115,31 @@ export class CategoriesService {
     const category = await this.prisma.category.findUnique({
       where: { id },
       include: {
-        products: { take: 10, orderBy: { name: 'asc' } }, // Incluir algunos productos de ejemplo
-        childCategories: true, // Incluir hijos directos
-        parentCategory: true, // Incluir padre
-        _count: { select: { products: true, childCategories: true } }, // Contadores
+        products: {
+          take: 10,
+          orderBy: { name: 'asc' },
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            currentStock: true,
+          },
+        },
+        subcategories: true,
+        parentCategory: true,
+        _count: {
+          select: {
+            products: true,
+            subcategories: true,
+          },
+        },
       },
     });
+
     if (!category) {
       throw new NotFoundException(`Category with ID "${id}" not found`);
     }
+
     return category;
   }
 
@@ -122,9 +148,14 @@ export class CategoriesService {
       where: { slug },
       include: {
         products: { take: 10, orderBy: { name: 'asc' } },
-        childCategories: true,
+        subcategories: true,
         parentCategory: true,
-        _count: { select: { products: true, childCategories: true } },
+        _count: {
+          select: {
+            products: true,
+            subcategories: true,
+          },
+        },
       },
     });
     if (!category) {
@@ -137,17 +168,17 @@ export class CategoriesService {
     id: string,
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<Category> {
-    // Verificar si la categoría existe
-    await this.findOne(id);
+    // Verify category exists
+    const currentCategory = await this.findOne(id);
+    if (!currentCategory) {
+      throw new NotFoundException(`Category with ID "${id}" not found`);
+    }
 
-    const { name, slug, parentCategoryId, ...categoryData } = updateCategoryDto;
+    const { name, slug, parentId, ...categoryData } = updateCategoryDto;
     const dataToUpdate: Prisma.CategoryUpdateInput = { ...categoryData };
 
-    // Validar y preparar nombre y slug si se proporcionan
+    // Validate and prepare name and slug if provided
     if (name || slug) {
-      const currentCategory = await this.prisma.category.findUnique({
-        where: { id },
-      });
       const finalName = name ?? currentCategory.name;
       const finalSlug = slug
         ? slugify(slug)
@@ -155,13 +186,14 @@ export class CategoriesService {
           ? slugify(name)
           : currentCategory.slug;
 
-      // Verificar si el nuevo nombre o slug ya existen en OTRA categoría
+      // Verify if new name or slug exists in ANOTHER category
       const existingCategory = await this.prisma.category.findFirst({
         where: {
-          id: { not: id }, // Excluir la categoría actual
+          id: { not: id },
           OR: [{ name: finalName }, { slug: finalSlug }],
         },
       });
+
       if (existingCategory) {
         if (existingCategory.name === finalName) {
           throw new ConflictException(
@@ -174,30 +206,9 @@ export class CategoriesService {
           );
         }
       }
-      if (name) dataToUpdate.name = name;
-      dataToUpdate.slug = finalSlug; // Siempre actualizar slug si nombre o slug cambian
-    }
 
-    // Validar y preparar parentCategoryId si se proporciona
-    if (parentCategoryId !== undefined) {
-      // Permite establecer parent a null
-      if (parentCategoryId === id) {
-        throw new ConflictException('A category cannot be its own parent.');
-      }
-      if (parentCategoryId) {
-        const parentExists = await this.prisma.category.findUnique({
-          where: { id: parentCategoryId },
-        });
-        if (!parentExists) {
-          throw new NotFoundException(
-            `Parent category with ID "${parentCategoryId}" not found.`,
-          );
-        }
-        // Opcional: Verificar si se está creando un ciclo (A->B, B->A) - requiere consulta recursiva o lógica adicional
-        dataToUpdate.parentCategory = { connect: { id: parentCategoryId } };
-      } else {
-        dataToUpdate.parentCategory = { disconnect: true }; // Desconectar padre si se pasa null
-      }
+      if (name) dataToUpdate.name = name;
+      dataToUpdate.slug = finalSlug;
     }
 
     try {
@@ -211,82 +222,105 @@ export class CategoriesService {
   }
 
   async remove(id: string): Promise<Category> {
-    // Verificar si la categoría existe
-    const categoryToDelete = await this.findOne(id);
-
-    // Verificar si tiene productos asociados o subcategorías
-    const hasProducts = await this.prisma.product.count({
-      where: { categoryId: id },
+    const category = await this.prisma.category.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            products: true,
+            subcategories: true,
+          },
+        },
+      },
     });
-    const hasChildren = await this.prisma.category.count({
-      where: { parentCategoryId: id },
-    });
 
-    if (hasProducts > 0) {
-      throw new ConflictException(
-        `Cannot delete category "${categoryToDelete.name}" because it has ${hasProducts} associated products. Please reassign or delete them first.`,
-      );
-    }
-    if (hasChildren > 0) {
-      throw new ConflictException(
-        `Cannot delete category "${categoryToDelete.name}" because it has ${hasChildren} subcategories. Please reassign or delete them first.`,
-      );
+    if (!category) {
+      throw new NotFoundException(`Category with ID "${id}" not found`);
     }
 
-    // Si no hay dependencias, proceder a borrar
+    if (category._count.products > 0 || category._count.subcategories > 0) {
+      throw new ConflictException(
+        `Cannot delete category "${category.name}" because it has ${category._count.products} products and ${category._count.subcategories} subcategories. Please reassign or delete them first.`,
+      );
+    }
+
     try {
       return await this.prisma.category.delete({
         where: { id },
       });
     } catch (error) {
-      // Manejar errores inesperados de borrado
       this.handleDbError(error);
     }
   }
 
-  // Helper para generar árbol de categorías (ejemplo simple)
-  async getCategoryTree(): Promise<any[]> {
-    const categories = await this.prisma.category.findMany({
-      where: { isActive: true }, // Opcional: solo activas
-      orderBy: { order: 'asc', name: 'asc' },
+  async getCategoryTree(): Promise<CategoryTree[]> {
+    const allCategories = await this.prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: { displayOrder: 'asc' },
       include: {
-        _count: { select: { products: true } }, // Contar productos
+        _count: {
+          select: {
+            products: true,
+            subcategories: true,
+          },
+        },
+        subcategories: {
+          where: { isActive: true },
+          orderBy: { displayOrder: 'asc' },
+        },
       },
     });
 
-    const buildTree = (parentId: string | null = null): any[] => {
-      return categories
-        .filter((category) => category.parentCategoryId === parentId)
-        .map((category) => ({
-          ...category,
-          productCount: category._count.products, // Renombrar para claridad
-          children: buildTree(category.id), // Llamada recursiva
-        }));
-    };
+    // Transform the categories into CategoryTree structure
+    const categoriesWithChildren = allCategories.map((cat) => ({
+      ...cat,
+      children: [],
+      subcategories: undefined, // Remove subcategories as we'll use children instead
+    })) as CategoryTree[];
 
-    return buildTree(); // Empezar desde la raíz (parentId = null)
+    // Filter for root categories and build tree
+    return this.buildCategoryTree(
+      categoriesWithChildren.filter((cat) => !cat.parentId),
+    );
   }
 
-  // Helper para manejar errores de base de datos
-  private handleDbError(error: any, context?: any): never {
+  private buildCategoryTree(categories: CategoryTree[]): CategoryTree[] {
+    return categories.map((category) => {
+      const cat = category as unknown as CategoryWithSubcategories;
+      return {
+        ...category,
+        subcategories: undefined,
+        children: cat.subcategories
+          ? this.buildCategoryTree(
+              cat.subcategories.map((sub) => ({
+                ...sub,
+                children: [],
+              })) as CategoryTree[],
+            )
+          : [],
+      };
+    });
+  }
+
+  private handleDbError(error: any, context?: DbErrorContext): never {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         // Unique constraint violation
         const fields = error.meta?.target as string[];
         let message = 'Unique constraint violation.';
-        if (fields?.includes('name') && context?.name)
+        if (fields?.includes('name') && context?.name) {
           message = `Category with name "${context.name}" already exists.`;
-        else if (fields?.includes('slug') && context?.slug)
+        } else if (fields?.includes('slug') && context?.slug) {
           message = `Category with slug "${context.slug}" already exists.`;
+        }
         throw new ConflictException(message);
       }
       if (error.code === 'P2025') {
         // Record not found (e.g., during update/delete)
         throw new NotFoundException('The category record was not found.');
       }
-      // Podrías manejar P2003 (Foreign key constraint) aquí si no lo hiciste antes del delete
     }
-    console.error('Database Error:', error); // Loguear el error completo
+    console.error('Database Error:', error);
     throw new InternalServerErrorException(
       'An unexpected database error occurred.',
     );

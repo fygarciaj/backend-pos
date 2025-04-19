@@ -10,7 +10,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { ProductsService } from '../products/products.service'; // Importar ProductsService
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
-import { Prisma, Sale } from '@prisma/client';
+import { Prisma, Sale, MovementType, SaleStatus } from '@prisma/client';
 
 @Injectable()
 export class SalesService {
@@ -21,109 +21,108 @@ export class SalesService {
     private readonly productsService: ProductsService, // Inyectar ProductsService
   ) {}
 
-  async create(createSaleDto: CreateSaleDto, userId: string): Promise<Sale> {
-    const { items, customerId, discountAmount, discountPercent, ...saleData } =
-      createSaleDto;
+  async create(createSaleDto: CreateSaleDto, userId: string) {
+    const {
+      customerId,
+      items,
+      paymentMethod,
+      discountAmount = 0,
+    } = createSaleDto;
+
     return this.prisma.$transaction(async (tx) => {
-      let calculatedSubtotal = 0;
-      const saleDetailsInput: any[] = [];
-      const productStockUpdates: {
-        productId: string;
-        quantityChange: number;
-      }[] = [];
-      if (customerId) {
-        const customerExists = await tx.customer.findUnique({
-          where: { id: customerId },
-        });
-        if (!customerExists)
-          throw new NotFoundException(
-            `Customer with ID "${customerId}" not found.`,
-          );
-      }
-      for (const item of items) {
-        const product = await tx.product.findUnique({
-          where: { id: item.productId },
-        });
-        if (!product)
-          throw new NotFoundException(
-            `Product with ID "${item.productId}" not found.`,
-          );
-        if (!product.isActive)
-          throw new ConflictException(
-            `Product "${product.name}" (ID: ${item.productId}) is not active.`,
-          );
-        if (product.currentStock < item.quantity)
-          throw new ConflictException(
-            `Insufficient stock for product "${product.name}" (ID: ${item.productId}). Requested: ${item.quantity}, Available: ${product.currentStock}`,
-          );
-        const itemSubtotal = product.sellingPrice * item.quantity;
-        const itemTotal = itemSubtotal;
-        calculatedSubtotal += itemSubtotal;
-        saleDetailsInput.push({
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: product.sellingPrice,
-          total: itemTotal,
-        });
-        productStockUpdates.push({
-          productId: item.productId,
-          quantityChange: -item.quantity,
-        });
-      }
-      let saleTotal = calculatedSubtotal;
-      const saleDiscountAmount = Number(discountAmount ?? '0.00');
-      const saleDiscountPercent = Number(discountPercent ?? '0.00');
-      if (saleDiscountPercent > 0)
-        saleTotal -= (saleTotal * saleDiscountPercent) / 100;
-      if (saleDiscountAmount > 0) saleTotal -= saleDiscountAmount;
-      if (saleTotal < 0) saleTotal = 0;
-      const calculatedTaxes = 0;
-      saleTotal += calculatedTaxes;
-      const createdSale = await tx.sale.create({
+      // Calculate subtotal and total
+      const itemsWithCalculations = items.map((item) => ({
+        ...item,
+        itemSubtotal: item.quantity * item.unitPrice,
+        itemTotal:
+          item.quantity * item.unitPrice * (1 + (item.taxRate || 0) / 100) -
+          (item.itemDiscountAmount || 0),
+      }));
+
+      const subtotal = itemsWithCalculations.reduce(
+        (sum, item) => sum + item.itemSubtotal,
+        0,
+      );
+      const totalTax = itemsWithCalculations.reduce(
+        (sum, item) => sum + (item.itemSubtotal * (item.taxRate || 0)) / 100,
+        0,
+      );
+      const totalAmount = subtotal + totalTax - discountAmount;
+
+      // Create the sale with proper fields
+      const sale = await tx.sale.create({
         data: {
-          ...saleData,
-          subtotal: calculatedSubtotal,
-          total: saleTotal,
-          discountAmount: saleDiscountAmount,
-          discountPercent: saleDiscountPercent,
-          userId: userId,
-          ...(customerId && { customerId: customerId }),
-          saleDetails: { createMany: { data: saleDetailsInput } },
-        },
-        include: { saleDetails: true },
-      });
-      for (const update of productStockUpdates) {
-        await this.productsService.updateStock(
-          update.productId,
-          update.quantityChange,
-          'SALE_EXIT',
+          customerId,
           userId,
-          undefined,
-          createdSale.id,
-          undefined,
-          undefined,
-          tx,
-        );
-      }
-      const finalSale = await tx.sale.findUnique({
-        where: { id: createdSale.id },
+          subtotal,
+          totalAmount,
+          paymentMethod,
+          discountAmount,
+          status: 'COMPLETED' as SaleStatus,
+          taxDetails: { total: totalTax },
+          saleDetails: {
+            create: itemsWithCalculations.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              itemDiscountAmount: item.itemDiscountAmount || 0,
+              itemSubtotal: item.itemSubtotal,
+              itemTotal: item.itemTotal,
+              itemTaxDetails: { rate: item.taxRate || 0 },
+            })),
+          },
+        },
         include: {
-          user: { select: { id: true, username: true, fullName: true } },
           customer: true,
+          user: true,
           saleDetails: {
             include: {
-              product: {
-                select: { id: true, name: true, sku: true, barcode: true },
-              },
+              product: true,
             },
           },
         },
       });
-      if (!finalSale)
-        throw new InternalServerErrorException(
-          'Failed to retrieve the created sale details.',
-        );
-      return finalSale;
+
+      // Update inventory
+      for (const item of items) {
+        await this.updateInventory(tx, {
+          productId: item.productId,
+          quantity: -item.quantity,
+          userId,
+          saleId: sale.id,
+        });
+      }
+
+      return sale;
+    });
+  }
+
+  private async updateInventory(
+    tx: Prisma.TransactionClient,
+    params: {
+      productId: string;
+      quantity: number;
+      userId: string;
+      saleId: string;
+    },
+  ) {
+    const { productId, quantity, userId, saleId } = params;
+
+    // Update product stock
+    await tx.product.update({
+      where: { id: productId },
+      data: { currentStock: { increment: quantity } },
+    });
+
+    // Create inventory movement
+    await tx.inventoryMovement.create({
+      data: {
+        productId,
+        quantity,
+        movementType: MovementType.SALE_EXIT,
+        userId,
+        saleId,
+      },
     });
   }
 

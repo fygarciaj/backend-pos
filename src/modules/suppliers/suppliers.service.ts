@@ -213,27 +213,30 @@ export class SuppliersService {
   }
 
   async remove(id: string): Promise<Supplier> {
-    // Verificar si el proveedor existe
-    const supplierToDelete = await this.findOne(id, true); // Incluir relaciones para verificar
+    const supplierToDelete = await this.prisma.supplier.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { purchaseOrders: true },
+        },
+      },
+    });
 
-    if (
-      supplierToDelete &&
-      '_count' in supplierToDelete &&
-      supplierToDelete._count?.purchaseOrders > 0
-    ) {
+    if (!supplierToDelete) {
+      throw new NotFoundException(`Supplier with ID "${id}" not found`);
+    }
+
+    if (supplierToDelete._count.purchaseOrders > 0) {
       throw new ConflictException(
         `Cannot delete supplier "${supplierToDelete.name}" because they have ${supplierToDelete._count.purchaseOrders} associated purchase orders. Please reassign or delete them first.`,
       );
     }
 
-    // Si no hay dependencias, proceder a borrar
     try {
       this.logger.log(
         `Deleting supplier: ${supplierToDelete.name} (ID: ${id})`,
       );
-      return await this.prisma.supplier.delete({
-        where: { id },
-      });
+      return await this.prisma.supplier.delete({ where: { id } });
     } catch (error) {
       this.handleDbError(error);
     }

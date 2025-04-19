@@ -21,7 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { RolesGuard } from '../auth/guards/roles.guard'; // Ajusta ruta
 import { Roles } from '../auth/decorators/roles.decorator'; // Ajusta ruta
-import { UserRole, Prisma, InventoryMovementType } from '@prisma/client';
+import { UserRole, Prisma, MovementType } from '@prisma/client';
 // JwtAuthGuard es global
 
 @ApiTags('Inventory')
@@ -80,7 +80,7 @@ export class InventoryController {
   @ApiQuery({
     name: 'type',
     required: false,
-    enum: InventoryMovementType,
+    enum: MovementType,
     description: 'Filter by movement type',
   })
   @ApiQuery({
@@ -103,25 +103,25 @@ export class InventoryController {
     @Query('take', new DefaultValuePipe(20), ParseIntPipe) take?: number,
     @Query('productId') productId?: string,
     @Query('userId') userId?: string,
-    @Query('type') type?: InventoryMovementType,
+    @Query('type') movementType?: MovementType,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
     const where: Prisma.InventoryMovementWhereInput = {};
     if (productId) where.productId = productId;
-    if (userId) where.userId = userId;
-    if (type) where.type = type;
+    if (movementType) where.movementType = movementType as MovementType;
+
     if (startDate || endDate) {
-      where.movementDate = {};
-      if (startDate) where.movementDate.gte = new Date(startDate);
-      if (endDate) where.movementDate.lte = new Date(endDate);
+      where.timestamp = {};
+      if (startDate) where.timestamp.gte = new Date(startDate);
+      if (endDate) where.timestamp.lte = new Date(endDate);
     }
 
-    return this.inventoryService.getInventoryMovements({
-      skip,
-      take,
+    return this.inventoryService.findAll({
+      skip: skip ? parseInt(skip.toString(), 10) : undefined,
+      take: take ? parseInt(take.toString(), 10) : undefined,
       where,
-      // Podrías añadir orderBy desde query params
+      orderBy: { timestamp: 'desc' },
     });
   }
 

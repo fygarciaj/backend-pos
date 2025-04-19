@@ -1,13 +1,13 @@
+import { IsNumber, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, Min } from 'class-validator';
 
 export class UpdateProductLocationQuantityDto {
   @ApiProperty({
-    description: 'New quantity for the product at this location',
-    example: 15,
+    description: 'New quantity at location',
+    example: 10,
+    minimum: 0,
   })
-  @IsInt()
+  @IsNumber()
   @Min(0)
-  @IsNotEmpty()
-  quantityInLocation: number;
+  quantityAtLocation: number;
 }

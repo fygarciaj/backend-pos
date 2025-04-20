@@ -96,11 +96,16 @@
     "ignoredBuiltDependencies": [
       "@prisma/engines",
       "@scarf/scarf",
+      "bcrypt",
       "esbuild",
       "prisma"
     ],
     "onlyBuiltDependencies": [
-      "@scarf/scarf"
+      "@nestjs/core",
+      "@prisma/client",
+      "@scarf/scarf",
+      "@swc/core",
+      "bcrypt"
     ]
   }
 }

@@ -160,10 +160,8 @@ export class SalesController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSaleDto: UpdateSaleDto,
-    @Request() req: { user: { userId: string } },
   ) {
-    const userId = req.user.userId; // Obtener ID del usuario que realiza la actualización
-    return this.salesService.update(id, updateSaleDto, userId);
+    return this.salesService.update(id, updateSaleDto);
   }
 
   // @Delete(':id')

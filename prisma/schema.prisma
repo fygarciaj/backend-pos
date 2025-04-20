@@ -224,7 +224,7 @@ model PurchaseOrder {
   totalAmount  Float? // Calculated or entered
 
   supplier           Supplier            @relation(fields: [supplierId], references: [id])
-  createdByUserId     String
+  createdByUserId    String
   items              PurchaseOrderItem[]
   inventoryMovements InventoryMovement[] // Movements associated with receiving items
 

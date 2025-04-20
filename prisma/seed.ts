@@ -4,6 +4,7 @@ import {
   MovementType,
   SaleStatus,
 } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -42,7 +43,7 @@ async function main() {
       update: {},
       create: {
         username: roleData.username,
-        passwordHash: 'hashed_password', // Replace with a real hashed password
+        passwordHash: bcrypt.hashSync('password123', 10), // Replace with a real hashed password
         fullName: roleData.fullName,
         role: roleData.role,
         isActive: true,

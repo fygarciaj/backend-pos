@@ -2,10 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProductsService } from './products.service';
 import { PrismaService } from '../../database/prisma.service';
 import { NotFoundException, ConflictException } from '@nestjs/common';
-import { Prisma, Product, InventoryMovementType } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Product } from '@prisma/client'; // Corrected import
+import Decimal from 'decimal.js'; // Import Decimal if needed for mock data
 import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+// Removed unused import for UpdateProductDto
 
 // Mock PrismaService
 const mockPrismaService = {
@@ -21,48 +21,67 @@ const mockPrismaService = {
     create: jest.fn(),
   },
   // Mock $transaction
-  $transaction: jest.fn().mockImplementation(async (callback) => {
-    // Simulate transaction by calling the callback with a mock transaction client
-    // The mock client should mirror the methods used within the transaction
-    const mockTxClient = {
-      product: {
-        findUnique: mockPrismaService.product.findUnique,
-        update: mockPrismaService.product.update,
+  $transaction: jest
+    .fn()
+    .mockImplementation(
+      async <T>(
+        callback: (txClient: typeof mockPrismaService) => Promise<T>,
+      ): Promise<T> => {
+        // Simulate transaction by calling the callback with a mock transaction client
+        // The mock client should mirror the methods used within the transaction
+        const mockTxClient = {
+          product: {
+            findUnique: mockPrismaService.product.findUnique,
+            findMany: mockPrismaService.product.findMany,
+            create: mockPrismaService.product.create,
+            update: mockPrismaService.product.update,
+            delete: mockPrismaService.product.delete,
+            count: mockPrismaService.product.count,
+          },
+          inventoryMovement: {
+            create: mockPrismaService.inventoryMovement.create,
+          },
+          $transaction: mockPrismaService.$transaction,
+        };
+        return await callback(mockTxClient);
       },
-      inventoryMovement: {
-        create: mockPrismaService.inventoryMovement.create,
-      },
-      // Add other models/methods used in transactions here
-    };
-    return await callback(mockTxClient);
-  }),
+    ),
 };
 
 const mockProduct: Product = {
-  id: 'prod-uuid-1',
+  id: 'product-id',
   name: 'Test Product',
-  description: 'Desc',
-  barcode: '12345',
-  sku: 'SKU123',
-  currentStock: 10,
-  minStock: 5,
-  maxStock: 100,
-  unitOfMeasure: 'unit',
-  costPrice: new Decimal('10.00'),
-  sellingPrice: new Decimal('20.00'),
-  isActive: true,
-  isFeatured: false,
-  tags: 'tag1,tag2',
-  promotionIsActive: false,
-  promotionId: null,
-  weight: null,
-  dimensions: null,
-  variants: null,
+  description: 'Test Description',
+  barcode: '123456789',
+  currentStock: 100,
+  minimumStock: 10,
+  maximumStock: 200,
+  categoryId: 'category-id',
+  brandId: 'brand-id',
+  costPrice: (() => {
+    try {
+      return new Decimal('10.00').toNumber(); // Convert Decimal to number
+    } catch (error) {
+      console.error(
+        'Error constructing Decimal or converting to number:',
+        error,
+      );
+      return 0; // Fallback to a default value
+    }
+  })(),
   createdAt: new Date(),
   updatedAt: new Date(),
-  categoryId: 'cat-uuid-1',
-  brandId: 'brand-uuid-1',
-  locationId: null,
+  variants: {}, // Mock variants as an empty object
+  images: [], // Add mock images as an empty array
+  unitOfMeasure: 'kg', // Add a mock unit of measure
+  isActive: true, // Add a mock isActive flag
+  isFeatured: false, // Add a mock isFeatured flag
+  tags: '', // Add mock tags as an empty string
+  isPromotionActive: false, // Add a mock isPromotionActive flag
+  promotionId: null, // Add a mock promotionId
+  weight: null, // Add a mock weight
+  dimensions: null, // Add a mock dimensions
+  sku: 'test-sku', // Add a mock SKU
 };
 
 describe('ProductsService', () => {

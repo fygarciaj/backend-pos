@@ -27,7 +27,7 @@ const mockJwtService = {
 const mockUser: User = {
   id: 'user-uuid-1',
   username: 'testuser',
-  password: 'hashedPasswordFromDb',
+  passwordHash: 'hashedPasswordFromDb',
   fullName: 'Test User Full',
   role: UserRole.CASHIER,
   isActive: true,
@@ -35,8 +35,7 @@ const mockUser: User = {
   createdAt: new Date(),
   updatedAt: new Date(),
 };
-const mockUserNoPassword = { ...mockUser };
-delete mockUserNoPassword.password;
+const { ...mockUserNoPassword } = mockUser;
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -124,7 +123,7 @@ describe('AuthService', () => {
       };
       expect(jwtService.sign).toHaveBeenCalledWith(expectedPayload);
       expect(usersService.update).toHaveBeenCalledWith(mockUser.id, {
-        lastLogin: expect.any(Date),
+        lastLogin: expect.any(Date) as Date,
       });
       expect(result).toEqual({ access_token: mockToken });
     });

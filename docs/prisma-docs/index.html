@@ -208,7 +208,7 @@
                   <div class="mt-1 ml-2">
                     <div class="mb-1 font-medium text-gray-600"><a href="#model-PurchaseOrder-fields">Fields</a></div>
                       <ul class="pl-3 ml-1 border-l-2 border-gray-400">
-                      <li><a href="#model-PurchaseOrder-id">id</a></li><li><a href="#model-PurchaseOrder-supplierId">supplierId</a></li><li><a href="#model-PurchaseOrder-orderDate">orderDate</a></li><li><a href="#model-PurchaseOrder-status">status</a></li><li><a href="#model-PurchaseOrder-receivedDate">receivedDate</a></li><li><a href="#model-PurchaseOrder-totalAmount">totalAmount</a></li><li><a href="#model-PurchaseOrder-supplier">supplier</a></li><li><a href="#model-PurchaseOrder-items">items</a></li><li><a href="#model-PurchaseOrder-inventoryMovements">inventoryMovements</a></li>
+                      <li><a href="#model-PurchaseOrder-id">id</a></li><li><a href="#model-PurchaseOrder-supplierId">supplierId</a></li><li><a href="#model-PurchaseOrder-orderDate">orderDate</a></li><li><a href="#model-PurchaseOrder-status">status</a></li><li><a href="#model-PurchaseOrder-receivedDate">receivedDate</a></li><li><a href="#model-PurchaseOrder-totalAmount">totalAmount</a></li><li><a href="#model-PurchaseOrder-supplier">supplier</a></li><li><a href="#model-PurchaseOrder-createdByUserId">createdByUserId</a></li><li><a href="#model-PurchaseOrder-items">items</a></li><li><a href="#model-PurchaseOrder-inventoryMovements">inventoryMovements</a></li>
                       </ul>
                   </div>
                   <div class="mt-2 ml-2">
@@ -8276,6 +8276,26 @@
       </td>
       <td class="px-4 py-2 border">
        <a href="#type-outputType-Supplier">Supplier</a>
+      </td>
+      <td class="px-4 py-2 border">
+        <ul>
+          <li> - </li>
+        </ul>
+      </td>
+      <td class="px-4 py-2 border">
+        <strong>Yes</strong>
+      </td>
+      <td class="px-4 py-2 border">
+        -
+      </td>
+    </tr>
+    
+    <tr id="model-PurchaseOrder-createdByUserId">
+      <td class="px-4 py-2 border">
+       createdByUserId 
+      </td>
+      <td class="px-4 py-2 border">
+       String
       </td>
       <td class="px-4 py-2 border">
         <ul>
@@ -26049,6 +26069,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        <a href="#type-inputType-StringFilter">StringFilter</a> | String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         supplier </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-SupplierScalarRelationFilter">SupplierScalarRelationFilter</a> | <a href="#type-inputType-SupplierWhereInput">SupplierWhereInput</a>
@@ -26164,6 +26196,18 @@
         totalAmount </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-SortOrder">SortOrder</a> | <a href="#type-inputType-SortOrderInput">SortOrderInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        <a href="#type-inputType-SortOrder">SortOrder</a>
       </td>
 
       <td class="px-4 py-2 border">
@@ -26345,6 +26389,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        <a href="#type-inputType-StringFilter">StringFilter</a> | String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         supplier </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-SupplierScalarRelationFilter">SupplierScalarRelationFilter</a> | <a href="#type-inputType-SupplierWhereInput">SupplierWhereInput</a>
@@ -26460,6 +26516,18 @@
         totalAmount </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-SortOrder">SortOrder</a> | <a href="#type-inputType-SortOrderInput">SortOrderInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        <a href="#type-inputType-SortOrder">SortOrder</a>
       </td>
 
       <td class="px-4 py-2 border">
@@ -26648,6 +26716,18 @@
 
       <td class="px-4 py-2 border">
         <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        <a href="#type-inputType-StringWithAggregatesFilter">StringWithAggregatesFilter</a> | String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
       </td>
     </tr>
     
@@ -43089,6 +43169,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         supplier </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-SupplierCreateNestedOneWithoutPurchaseOrdersInput">SupplierCreateNestedOneWithoutPurchaseOrdersInput</a>
@@ -43213,6 +43305,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         items </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-PurchaseOrderItemUncheckedCreateNestedManyWithoutPurchaseOrderInput">PurchaseOrderItemUncheckedCreateNestedManyWithoutPurchaseOrderInput</a>
@@ -43308,6 +43412,18 @@
 
       <td class="px-4 py-2 border">
         <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String | <a href="#type-inputType-StringFieldUpdateOperationsInput">StringFieldUpdateOperationsInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
       </td>
     </tr>
     
@@ -43437,6 +43553,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String | <a href="#type-inputType-StringFieldUpdateOperationsInput">StringFieldUpdateOperationsInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         items </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-PurchaseOrderItemUncheckedUpdateManyWithoutPurchaseOrderNestedInput">PurchaseOrderItemUncheckedUpdateManyWithoutPurchaseOrderNestedInput</a>
@@ -43547,6 +43675,18 @@
       </td>
     </tr>
     
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
           </tbody>
         </table>
       </div>
@@ -43620,6 +43760,18 @@
 
       <td class="px-4 py-2 border">
         <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String | <a href="#type-inputType-StringFieldUpdateOperationsInput">StringFieldUpdateOperationsInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
       </td>
     </tr>
     
@@ -43708,6 +43860,18 @@
 
       <td class="px-4 py-2 border">
         <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String | <a href="#type-inputType-StringFieldUpdateOperationsInput">StringFieldUpdateOperationsInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
       </td>
     </tr>
     
@@ -59207,6 +59371,18 @@
       </td>
     </tr>
     
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        <a href="#type-inputType-SortOrder">SortOrder</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
           </tbody>
         </table>
       </div>
@@ -59323,6 +59499,18 @@
       </td>
     </tr>
     
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        <a href="#type-inputType-SortOrder">SortOrder</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
           </tbody>
         </table>
       </div>
@@ -59402,6 +59590,18 @@
     <tr>
       <td class="px-4 py-2 border">
         totalAmount </td>
+      <td class="px-4 py-2 border">
+        <a href="#type-inputType-SortOrder">SortOrder</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-SortOrder">SortOrder</a>
       </td>
@@ -97593,6 +97793,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         items </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-PurchaseOrderItemCreateNestedManyWithoutPurchaseOrderInput">PurchaseOrderItemCreateNestedManyWithoutPurchaseOrderInput</a>
@@ -97688,6 +97900,18 @@
 
       <td class="px-4 py-2 border">
         <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
       </td>
     </tr>
     
@@ -98184,6 +98408,18 @@
 
       <td class="px-4 py-2 border">
         <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        <a href="#type-inputType-StringFilter">StringFilter</a> | String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
       </td>
     </tr>
     
@@ -99897,6 +100133,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         supplier </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-SupplierCreateNestedOneWithoutPurchaseOrdersInput">SupplierCreateNestedOneWithoutPurchaseOrdersInput</a>
@@ -100004,6 +100252,18 @@
 
       <td class="px-4 py-2 border">
         <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
       </td>
     </tr>
     
@@ -100997,6 +101257,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String | <a href="#type-inputType-StringFieldUpdateOperationsInput">StringFieldUpdateOperationsInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         supplier </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-SupplierUpdateOneRequiredWithoutPurchaseOrdersNestedInput">SupplierUpdateOneRequiredWithoutPurchaseOrdersNestedInput</a>
@@ -101104,6 +101376,18 @@
 
       <td class="px-4 py-2 border">
         <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String | <a href="#type-inputType-StringFieldUpdateOperationsInput">StringFieldUpdateOperationsInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
       </td>
     </tr>
     
@@ -103145,6 +103429,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         supplier </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-SupplierCreateNestedOneWithoutPurchaseOrdersInput">SupplierCreateNestedOneWithoutPurchaseOrdersInput</a>
@@ -103252,6 +103548,18 @@
 
       <td class="px-4 py-2 border">
         <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
       </td>
     </tr>
     
@@ -104709,6 +105017,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String | <a href="#type-inputType-StringFieldUpdateOperationsInput">StringFieldUpdateOperationsInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         supplier </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-SupplierUpdateOneRequiredWithoutPurchaseOrdersNestedInput">SupplierUpdateOneRequiredWithoutPurchaseOrdersNestedInput</a>
@@ -104816,6 +105136,18 @@
 
       <td class="px-4 py-2 border">
         <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String | <a href="#type-inputType-StringFieldUpdateOperationsInput">StringFieldUpdateOperationsInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
       </td>
     </tr>
     
@@ -123507,6 +123839,18 @@
       </td>
     </tr>
     
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
           </tbody>
         </table>
       </div>
@@ -123613,6 +123957,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String | <a href="#type-inputType-StringFieldUpdateOperationsInput">StringFieldUpdateOperationsInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         items </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-PurchaseOrderItemUpdateManyWithoutPurchaseOrderNestedInput">PurchaseOrderItemUpdateManyWithoutPurchaseOrderNestedInput</a>
@@ -123713,6 +124069,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String | <a href="#type-inputType-StringFieldUpdateOperationsInput">StringFieldUpdateOperationsInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         items </td>
       <td class="px-4 py-2 border">
         <a href="#type-inputType-PurchaseOrderItemUncheckedUpdateManyWithoutPurchaseOrderNestedInput">PurchaseOrderItemUncheckedUpdateManyWithoutPurchaseOrderNestedInput</a>
@@ -123808,6 +124176,18 @@
 
       <td class="px-4 py-2 border">
         <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String | <a href="#type-inputType-StringFieldUpdateOperationsInput">StringFieldUpdateOperationsInput</a>
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
       </td>
     </tr>
     
@@ -128371,6 +128751,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         supplier </td>
       <td class="px-4 py-2 border">
         <a href="#type-outputType-Supplier">Supplier</a>
@@ -132006,6 +132398,18 @@
 
       <td class="px-4 py-2 border">
         No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        <strong>Yes</strong>
       </td>
     </tr>
     
@@ -138975,6 +139379,18 @@
     
     <tr>
       <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        Int
+      </td>
+
+      <td class="px-4 py-2 border">
+        <strong>Yes</strong>
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
         _all </td>
       <td class="px-4 py-2 border">
         Int
@@ -139129,6 +139545,18 @@
       </td>
     </tr>
     
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
           </tbody>
         </table>
       </div>
@@ -139210,6 +139638,18 @@
         totalAmount </td>
       <td class="px-4 py-2 border">
         Float
+      </td>
+
+      <td class="px-4 py-2 border">
+        No
+      </td>
+    </tr>
+    
+    <tr>
+      <td class="px-4 py-2 border">
+        createdByUserId </td>
+      <td class="px-4 py-2 border">
+        String
       </td>
 
       <td class="px-4 py-2 border">

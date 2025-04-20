@@ -25,7 +25,7 @@ export class PurchaseOrdersService {
     private readonly productsService: ProductsService,
   ) {}
 
-  async create(createPurchaseOrderDto: CreatePurchaseOrderDto) {
+  async create(createPurchaseOrderDto: CreatePurchaseOrderDto, userId: string) {
     const { items, supplierId } = createPurchaseOrderDto;
 
     // Calculate total amount from items
@@ -39,6 +39,9 @@ export class PurchaseOrdersService {
         data: {
           supplierId,
           totalAmount: calculatedTotalAmount,
+          createdByUserId: userId,
+          orderDate: createPurchaseOrderDto.orderDate,
+          status: PurchaseOrderStatus.PENDING,
           items: {
             create: items.map((item) => ({
               productId: item.productId,
@@ -146,10 +149,12 @@ export class PurchaseOrdersService {
       }
 
       // Prepare update data, excluding items since they'll be handled separately
-      const { items, ...updateInput } = poUpdateData;
+      const { ...updateInput } = poUpdateData;
       const dataToUpdate: Prisma.PurchaseOrderUpdateInput = {
         ...updateInput,
         status: status || currentPO.status,
+        // Exclude items from the update data as they are handled separately
+        items: undefined,
       };
 
       // Process received items if provided
@@ -178,7 +183,8 @@ export class PurchaseOrdersService {
           const quantityReceivedBefore = poItem.quantityReceived ?? 0;
           const quantityReceivedNow = receivedItem.quantityReceivedNow;
 
-          const newQuantityReceived = quantityReceivedBefore + quantityReceivedNow;
+          const newQuantityReceived =
+            quantityReceivedBefore + quantityReceivedNow;
 
           if (newQuantityReceived > poItem.quantityOrdered) {
             throw new BadRequestException(

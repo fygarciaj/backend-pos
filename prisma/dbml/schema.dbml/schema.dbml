@@ -157,6 +157,7 @@ Table purchase_orders {
   receivedDate DateTime
   totalAmount Float
   supplier suppliers [not null]
+  createdByUserId String [not null]
   items purchase_order_items [not null]
   inventoryMovements inventory_movements [not null]
 }

@@ -325,6 +325,7 @@ async function main() {
           supplierId: supplier.id,
           status: 'PENDING',
           totalAmount: 3495,
+          createdByUserId: adminUser.id, // Added the required field
           items: {
             create: [
               {
@@ -353,7 +354,7 @@ async function main() {
 
       // Create a return for the previous sale
       if (sale && sale.saleDetails[0]) {
-        const return1 = await prisma.return.create({
+        await prisma.return.create({
           data: {
             originalSaleId: sale.id,
             processedByUserId: adminUser.id,
@@ -388,6 +389,6 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
+  .finally(() => {
+    prisma.$disconnect();
   });

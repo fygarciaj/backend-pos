@@ -5,7 +5,6 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   Query,
   ParseUUIDPipe,
   UseGuards,
@@ -52,9 +51,9 @@ export class PurchaseOrdersController {
   @ApiResponse({ status: 404, description: 'Not Found (Supplier or Product).' })
   create(
     @Body() createPurchaseOrderDto: CreatePurchaseOrderDto,
-    @Request() req,
+    @Request() req: { user: { userId: string } },
   ) {
-    const userId = req.user.userId;
+    const userId: string = req.user.userId;
     return this.purchaseOrdersService.create(createPurchaseOrderDto, userId);
   }
 
@@ -160,9 +159,9 @@ export class PurchaseOrdersController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updatePurchaseOrderDto: UpdatePurchaseOrderDto,
-    @Request() req,
+    @Request() req: { user: { userId: string } },
   ) {
-    const userId = req.user.userId;
+    const userId: string = req.user.userId;
     return this.purchaseOrdersService.update(
       id,
       updatePurchaseOrderDto,

@@ -33,9 +33,11 @@ export class SalesService {
       // Calculate subtotal and total
       const itemsWithCalculations = items.map((item) => ({
         ...item,
-        itemSubtotal: item.quantity * item.unitPrice,
+        itemSubtotal: item.quantity * (item.unitPrice ?? 0),
         itemTotal:
-          item.quantity * item.unitPrice * (1 + (item.taxRate || 0) / 100) -
+          item.quantity *
+            (item.unitPrice ?? 0) *
+            (1 + (item.taxRate || 0) / 100) -
           (item.itemDiscountAmount || 0),
       }));
 
@@ -47,7 +49,7 @@ export class SalesService {
         (sum, item) => sum + (item.itemSubtotal * (item.taxRate || 0)) / 100,
         0,
       );
-      const totalAmount = subtotal + totalTax - discountAmount;
+      const totalAmount = subtotal + totalTax - (Number(discountAmount) || 0);
 
       // Create the sale with proper fields
       const sale = await tx.sale.create({
@@ -57,14 +59,14 @@ export class SalesService {
           subtotal,
           totalAmount,
           paymentMethod,
-          discountAmount,
+          discountAmount: Number(discountAmount),
           status: 'COMPLETED' as SaleStatus,
           taxDetails: { total: totalTax },
           saleDetails: {
             create: itemsWithCalculations.map((item) => ({
-              productId: item.productId,
+              product: { connect: { id: item.productId } },
               quantity: item.quantity,
-              unitPrice: item.unitPrice,
+              unitPrice: item.unitPrice ?? 0,
               itemDiscountAmount: item.itemDiscountAmount || 0,
               itemSubtotal: item.itemSubtotal,
               itemTotal: item.itemTotal,
@@ -173,11 +175,7 @@ export class SalesService {
     return sale;
   }
 
-  async update(
-    id: string,
-    updateSaleDto: UpdateSaleDto,
-    userId: string,
-  ): Promise<Sale> {
+  async update(id: string, updateSaleDto: UpdateSaleDto): Promise<Sale> {
     const existingSale = await this.findOne(id);
     if (!existingSale)
       throw new NotFoundException(`Sale with ID "${id}" not found`);

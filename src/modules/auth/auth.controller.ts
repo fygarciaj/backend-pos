@@ -73,6 +73,7 @@ export class AuthController {
           isActive: boolean;
           createdAt: Date;
           updatedAt: Date;
+          lastLogin: Date | null;
         },
         'password'
       >,

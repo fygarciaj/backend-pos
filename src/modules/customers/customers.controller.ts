@@ -84,8 +84,8 @@ export class CustomersController {
     if (isActive !== undefined) where.isActive = isActive === 'true';
 
     return this.customersService.findAll({
-      skip: skip ? parseInt(skip, 10) : undefined,
-      take: take ? parseInt(take, 10) : undefined,
+      skip: skip ?? undefined,
+      take: take ?? undefined,
       where,
       orderBy: { fullName: 'asc' },
     });

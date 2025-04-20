@@ -30,7 +30,6 @@ import {
 import { RolesGuard } from '../auth/guards/roles.guard'; // Ajusta ruta
 import { Roles } from '../auth/decorators/roles.decorator'; // Ajusta ruta
 import { UserRole, Prisma } from '@prisma/client';
-import { Public } from '../auth/decorators/public.decorator'; // Para endpoints públicos si los hay
 
 @ApiTags('Locations')
 @ApiBearerAuth()

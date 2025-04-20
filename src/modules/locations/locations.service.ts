@@ -343,4 +343,30 @@ export class LocationsService {
       'An unexpected database error occurred.',
     );
   }
+
+  async assignProductToLocation(
+    assignDto: AssignProductLocationDto,
+  ): Promise<any> {
+    // Implement the logic to assign a product to a location
+    // Example: Validate the product and location, then create or update the assignment
+    const { productId, locationId, quantityAtLocation } = assignDto;
+
+    // Example validation and assignment logic
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+    });
+    const location = await this.prisma.location.findUnique({
+      where: { id: locationId },
+    });
+
+    if (!product || !location) {
+      throw new Error('Product or Location not found');
+    }
+
+    return this.prisma.productLocation.upsert({
+      where: { productId_locationId: { productId, locationId } },
+      update: { quantityAtLocation },
+      create: { productId, locationId, quantityAtLocation },
+    });
+  }
 }

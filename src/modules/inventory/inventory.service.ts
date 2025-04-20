@@ -30,7 +30,8 @@ export class InventoryService {
     adjustInventoryDto: AdjustInventoryDto,
     userId: string,
   ): Promise<Product> {
-    const { productId, type, quantity, reason } = adjustInventoryDto;
+    const { productId, movementType, quantity, adjustmentReason } =
+      adjustInventoryDto;
 
     // Validar que la cantidad sea positiva
     if (quantity <= 0) {
@@ -39,10 +40,10 @@ export class InventoryService {
 
     // Determinar el cambio real en la cantidad basado en el tipo
     const quantityChange =
-      type === MovementType.POSITIVE_ADJUSTMENT ? quantity : -quantity;
+      movementType === MovementType.POSITIVE_ADJUSTMENT ? quantity : -quantity;
 
     this.logger.log(
-      `Attempting stock adjustment for product ${productId} by user ${userId}. Type: ${type}, Quantity Change: ${quantityChange}, Reason: ${reason}`,
+      `Attempting stock adjustment for product ${productId} by user ${userId}. Type: ${movementType}, Quantity Change: ${quantityChange}, Reason: ${adjustmentReason}`,
     );
 
     // Llamar al método updateStock del ProductsService, que maneja la transacción
@@ -51,9 +52,9 @@ export class InventoryService {
       const updatedProduct = await this.productsService.updateStock(
         productId,
         quantityChange,
-        type, // MovementType
-        userId,
-        reason, // Razón del ajuste
+        movementType,
+        userId, // MovementType
+        adjustmentReason, // Razón del ajuste
         undefined, // relatedSaleId
         undefined, // relatedPurchaseOrderId
         undefined, // relatedReturnId
@@ -66,8 +67,10 @@ export class InventoryService {
     } catch (error) {
       // ProductsService ya debería lanzar errores apropiados (NotFound, Conflict)
       this.logger.error(
-        `Stock adjustment failed for product ${productId}: ${error.message}`,
-        error.stack,
+        `Stock adjustment failed for product ${productId}: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+        error instanceof Error ? error.stack : undefined,
       );
       // Re-lanzar el error para que el controlador lo maneje
       throw error;
@@ -183,7 +186,7 @@ export class InventoryService {
     queryParams.push(skip);
 
     this.logger.debug(
-      `Executing raw query for stock report: ${rawQuery} with params: ${JSON.stringify(queryParams)}`,
+      `Executing raw query for stock report with params: ${JSON.stringify(queryParams)}`,
     );
 
     try {
@@ -194,30 +197,46 @@ export class InventoryService {
 
       // Mapear el resultado crudo a una estructura más amigable si es necesario
       // (similar al 'select' original)
-      return result.map((row) => ({
-        id: row.id,
-        name: row.name,
-        sku: row.sku,
-        barcode: row.barcode,
-        currentStock: row.currentStock,
-        minimumStock: row.minimumStock,
-        unitOfMeasure: row.unitOfMeasure,
-        category: {
-          id: row.categoryId,
-          name: row.categoryName,
-        },
-        brand: {
-          id: row.brandId,
-          name: row.brandName,
-        },
-      }));
+      return result.map(
+        (row: {
+          id: string;
+          name: string;
+          sku: string;
+          barcode: string;
+          currentStock: number;
+          minimumStock: number;
+          unitOfMeasure: string;
+          categoryId: string;
+          categoryName: string;
+          brandId: string;
+          brandName: string;
+        }) => ({
+          id: row.id,
+          name: row.name,
+          sku: row.sku,
+          barcode: row.barcode,
+          currentStock: row.currentStock,
+          minimumStock: row.minimumStock,
+          unitOfMeasure: row.unitOfMeasure,
+          category: {
+            id: row.categoryId,
+            name: row.categoryName,
+          },
+          brand: {
+            id: row.brandId,
+            name: row.brandName,
+          },
+        }),
+      );
     } catch (error) {
       this.logger.error(
-        `Error executing raw query for stock report: ${error.message}`,
-        error.stack,
+        `Error executing raw query for stock report: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
       );
       throw new Error(
-        `Failed to generate current stock report: ${error.message}`,
+        `Failed to generate current stock report: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       );
     }
   }

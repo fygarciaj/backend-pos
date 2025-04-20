@@ -9,7 +9,7 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import { ProductsService } from '../products/products.service'; // Para ajustar stock
 import { CreateReturnDto } from './dto/create-return.dto';
-import { Prisma, Return } from '@prisma/client';
+import { Prisma, Return, MovementType } from '@prisma/client';
 
 @Injectable()
 export class ReturnsService {
@@ -126,7 +126,15 @@ export class ReturnsService {
 
         // 4. Actualizar Stock de Productos y crear movimientos de inventario
         await this.processReturnedItems(
-          tx,
+          tx as unknown as Omit<
+            PrismaService,
+            | '$connect'
+            | '$disconnect'
+            | '$on'
+            | '$transaction'
+            | '$use'
+            | '$extends'
+          >,
           returnedItems,
           processedByUserId,
           createdReturn.id,
@@ -143,7 +151,7 @@ export class ReturnsService {
 
         return createdReturn;
       })
-      .catch((error) => {
+      .catch((error: Error) => {
         this.logger.error(
           `Failed to process return for sale ${originalSaleId}: ${error.message}`,
           error.stack,
